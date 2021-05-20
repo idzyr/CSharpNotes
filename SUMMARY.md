@@ -28,4 +28,14 @@
   * [单例模式](./object-oriented/singleton-mode.md)
   * [命名空间](./object-oriented/namespace.md)
   * [值类型和引用类型](./object-oriented/value-and-reference.md)
-
+* [调试](./debug/debug.md)
+* 常用API
+  * [DateTime【获取系统时间】](./common-api/date-time.md)
+  * [SoundPlayer【播放wav音频】](./common-api/sound-player.md)
+  * [Random【随机数】](./common-api/random.md)
+  * [Stopwatch【计时器】](./basis/structure.md)
+  * [StringBuilder【大量字符拼接】](./common-api/string-builder.md)
+  * [String【字符串】](./common-api/string.md)
+  * [Path【路径】](./common-api/path.md)
+  * [File【文件】](./common-api/file.md)
+  * [Encoding【字符编码】](./common-api/encoding.md)
