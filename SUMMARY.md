@@ -16,3 +16,6 @@
   * [结构](./basis/basic-grammar/structure.md)
   * [数组](./basis/basic-grammar/array.md)
   * [异常处理](./basis/basic-grammar/exception-handling.md)
+  * [方法/函数](./basis/basic-grammar/method.md)
+* 面向对象
+  * 
