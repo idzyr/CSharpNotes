@@ -39,3 +39,17 @@
   * [Path【路径】](./common-api/path.md)
   * [File【文件】](./common-api/file.md)
   * [Encoding【字符编码】](./common-api/encoding.md)
+  * [FileStream【文件字节缓冲流】](./common-api/file-stream.md)
+  * [StreamReader 【字符缓冲输入流】](./common-api/stream-reader.md)
+  * [StreamWriter【 字符缓冲输出流】](./common-api/stream-writer.md)
+  * [GUID](./common-api/guid.md)
+  * [MD5](./common-api/md5.md)
+  * [Object](./common-api/object.md)
+  * [Directory【目录/文件夹】](./common-api/directory.md)
+* 集合
+  * [ArrayList](./set/array-list.md)
+  * [Hastable](./set/hastable.md)
+  * 泛型集合
+    * [List\<T>](./set/generic/list-t.md)
+    * [Dictionary<TKey, TValue>](./set/generic/dictionary-t.md)
+  
