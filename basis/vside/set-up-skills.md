@@ -21,8 +21,8 @@
 
 #### 工具箱添加更多组件
 
-![image-20191031190930011](file:///C:/Users/zyrbx/Desktop/C%23/CSharp-images/image-20191031190930011.png)
+![image-20191031190930011](set-up-skills-images/image-20191031190930011.png)
 
 、勾选需要的组件确定即可
 
-![image-20191031191148232](file:///C:/Users/zyrbx/Desktop/C%23/CSharp-images/image-20191031191148232.png)
+![image-20191031191148232](set-up-skills-images/image-20191031191148232.png)

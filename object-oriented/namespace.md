@@ -6,7 +6,7 @@
 
 2、在一个项目中引用另一个项目的类 1)、添加引用 2)、引用命名空间
 
-![1570517311499](file:///C:/Users/zyrbx/Desktop/C%23/CSharp-images/1570517311499.png)
+![1570517311499](namespace-images/1570517311499.png)
 
-![1570519067768](file:///C:/Users/zyrbx/Desktop/C%23/CSharp-images/1570519067768.png)
+![1570519067768](namespace-images/1570519067768.png)
 

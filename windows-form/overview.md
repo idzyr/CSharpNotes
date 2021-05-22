@@ -6,9 +6,9 @@ winform应用程序是一种智能客户端技术，我们可以使用winform应
 
 ## 特有目录
 
-![1571065454131](file:///C:/Users/zyrbx/Desktop/C%23/CSharp-images/1571065454131.png)
+![1571065454131](overview-images/1571065454131.png)
 
-![1571066258975](file:///C:/Users/zyrbx/Desktop/C%23/CSharp-images/1571066258975.png)
+![1571066258975](overview-images/1571066258975.png)
 
 他两个共同组成了Form1这个类。因为都使用了`partial`进行标记也就是部分类。
 

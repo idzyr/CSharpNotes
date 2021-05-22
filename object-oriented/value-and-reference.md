@@ -39,7 +39,7 @@
      Console.ReadKey();
 ```
 
-![1570958987472](file:///C:/Users/zyrbx/Desktop/C%23/CSharp-images/1570958987472.png)
+![1570958987472](value-and-reference-images/1570958987472.png)
 
 ## 装箱和拆箱
 

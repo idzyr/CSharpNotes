@@ -29,7 +29,7 @@
 
 注册事件窗口
 
-![1571121975268](file:///C:/Users/zyrbx/Desktop/C%23/CSharp-images/1571121975268.png)
+![1571121975268](overview-images/1571121975268.png)
 
 ## 常用代码
 

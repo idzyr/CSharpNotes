@@ -19,7 +19,7 @@
 
 **查看类图**
 
-![1570537158102](file:///C:/Users/zyrbx/Desktop/C%23/CSharp-images/1570537158102.png)
+![1570537158102](inherit-images/1570537158102.png)
 
 
 
