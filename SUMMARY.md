@@ -101,3 +101,13 @@
   * [控制台](./common-features/console.md)
   * [日期选择器](./common-features/date-picker.md)
   * [计算平年还是闰年](./common-features/leap-year.md)
+  * [石头剪刀布](./common-features/rock-paper-scissors.md)
+  * [音乐播放器](./common-features/media-player.md)
+  * [查找桌面层句柄](./common-features/find-work-w.md)
+  * [检测是否联网](./common-features/network-check.md)
+* 程序配置
+  * [properties【属性】](./program-config/properties.md)
+  * [Resources【资源目录】](./program-config/resources.md)
+* DLL【动态链接库】
+  * [创建自己的DLL](./dll/creater-dll.md)
+  * [调用Win32DLL](./dll/win32-dll.md)
