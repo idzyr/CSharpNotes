@@ -91,3 +91,13 @@
 * [GDI+](./windows-form/gdi.md)
 * XML&JSON
   * [XML](./xml&json/xml.md)
+* [委托](./uncategorized/commission.md)
+* HTTP
+  * [HttpWeb【C#提供】](./http/http-web.md)
+* [泛型](./uncategorized/generic.md) 
+* 常见功能实现
+  * 排序
+    * [冒泡排序](./common-features/sort/bubble.md)
+  * [控制台](./common-features/console.md)
+  * [日期选择器](./common-features/date-picker.md)
+  * [计算平年还是闰年](./common-features/leap-year.md)
