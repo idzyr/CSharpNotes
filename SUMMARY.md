@@ -105,9 +105,12 @@
   * [音乐播放器](./common-features/media-player.md)
   * [查找桌面层句柄](./common-features/find-work-w.md)
   * [检测是否联网](./common-features/network-check.md)
+  * [窗体调用控制台程序](./common-features/call-console-program.md)
 * 程序配置
   * [properties【属性】](./program-config/properties.md)
   * [Resources【资源目录】](./program-config/resources.md)
 * DLL【动态链接库】
   * [创建自己的DLL](./dll/creater-dll.md)
   * [调用Win32DLL](./dll/win32-dll.md)
+* 辅助工具
+  * [Reflector【反编译】](./auxiliary-tools/reflector.md)
