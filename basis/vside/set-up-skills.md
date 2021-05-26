@@ -26,3 +26,12 @@
 、勾选需要的组件确定即可
 
 ![image-20191031191148232](set-up-skills-images/image-20191031191148232.png)
+
+## 两次Tab键代码自动补全
+```csharp
+prop //生成简易属性代码
+propfull //生成复杂属性代码【带字段和包装器】
+ctor //快速生成当前类的构造器
+propg //带有“get”访问器和专用“set”访问器的自动实现属性的代码片段
+mbox //MessageBox.Show 的代码片段    
+```
