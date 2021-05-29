@@ -144,3 +144,13 @@
     * [TabControl【选项卡】](./wpf/controls/contents/tab-control.md)
     * [Slider【滑动条】](./wpf/controls/contents/slider.md)
     * [DataGrid【数据网格】](./wpf/controls/contents/data-grid.md)
+    * [InkCanvas【墨迹画布】](./wpf/controls/contents/ink-canvas.md)
+* 布局
+  * [概览](./wpf/layouts/overview.md)
+  * [StackPanel【堆栈布局】](./wpf/layouts/stack-panel.md)
+  * [Grid【表格布局/网格布局】](./wpf/layouts/grid.md)
+  * [DockPanel【停靠布局】](./wpf/layouts/dock-panel.md)
+  * [WrapPanel【换行布局】](./wpf/layouts/wrap-panel.md)
+  * [Canvas【画布布局】](./wpf/layouts/canvas.md)
+  * [UniformGrid【统一网格布局】](./wpf/layouts/uniform-grid.md)
+  * [Border【边框】](./wpf/layouts/border.md)
