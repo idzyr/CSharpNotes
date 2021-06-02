@@ -154,3 +154,7 @@
   * [Canvas【画布布局】](./wpf/layouts/canvas.md)
   * [UniformGrid【统一网格布局】](./wpf/layouts/uniform-grid.md)
   * [Border【边框】](./wpf/layouts/border.md)
+* [路由事件](./wpf/uncategorized/routed-event.md)
+* [Application](./wpf/configs/application.md)
+* [程序集资源](./wpf/uncategorized/res.md)
+* [数据绑定](./wpf/uncategorized/data-binding.md)
