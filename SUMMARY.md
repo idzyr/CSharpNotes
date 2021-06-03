@@ -159,3 +159,10 @@
 * [Application](./wpf/configs/application.md)
 * [程序集资源](./wpf/uncategorized/res.md)
 * [数据绑定](./wpf/uncategorized/data-binding.md)
+* [对象资源](./wpf/uncategorized/object-resource.md)
+* [样式](./wpf/uncategorized/style.md)
+* [绘图](./wpf/uncategorized/drawing.md)
+* [效果](./wpf/uncategorized/effect.md)
+* [画刷](./wpf/uncategorized/brush.md)
+* 动画
+  * [变换](./wpf/animation/transform.md)
