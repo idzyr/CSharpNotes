@@ -166,3 +166,15 @@
 * [画刷](./wpf/uncategorized/brush.md)
 * 动画
   * [变换](./wpf/animation/transform.md)
+  * [差值动画](./wpf/animation/difference-animation.md)
+  * [Storyboard【故事板】](./wpf/animation/storyboard.md)
+* [控件模板](./wpf/uncategorized/control-template.md)
+* 自定义控件
+  * [用户控件](./wpf/custom-control/user-control.md)
+* 常用API
+  * [画刷/笔刷](./wpf/common-api/brush.md)
+  * [系统信息](./wpf/common-api/system-info.md)
+* 对话框
+  * [OpenFileDialog【文件对话框】](./wpf/dialog/file-dialog.md)
+  * [FolderBrowserDialog【文件夹对话框】](./wpf/dialog/folder-browser-dialog.md)
+
