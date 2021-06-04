@@ -185,3 +185,6 @@
 * [拖放](./wpf/uncategorized/drag-and-drop.md)
 * MVVM
   * [概述](./wpf/mvvm/overview.md)
+
+## 附录
+* [常用开源库](./appendix/libs.md)
