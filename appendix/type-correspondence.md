@@ -38,7 +38,11 @@
 | WORD                                                         | Int16 or UInt16              |
 | WPARAM                                                       | IntPtr, UintPtr or Object    |
 
-另： 在进行string转换时，需要加入前缀[MarshalAs(UnmanagedType.LPStr)]lpdword 对应于 ref int
+注意；
+
+- 在进行string转换时，需要加入前缀`[MarshalAs(UnmanagedType.LPStr)]`
+- lpdword 对应于 ref int
+- 在使用StringBuilder时你必须先给先分配空间也就是`StringBuilder className = new StringBuilder(255);`，DLL才会将结果存放到你申请的空间中。
 
 > https://www.cnblogs.com/HappyEDay/p/5442909.html
 
