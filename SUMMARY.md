@@ -188,6 +188,7 @@
 
 ## 附录
 * [常用开源库](./appendix/libs.md)
+* [C#与C++之间类型对照](./appendix/type-correspondence.md)
 
 ## 拓展
 * [VLC【强大视频播放器】](./expand/vlc.md)

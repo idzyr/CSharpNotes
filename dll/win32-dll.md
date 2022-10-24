@@ -69,6 +69,8 @@ public static extern bool Beep(int frequency, int duration);
 | UINT                          | `uint`   | uint：无符号 32 位整数范围0 到 4,294,967,295   |
 | DWORD                         | `int`    |                                                |
 
+更多类型详解[C#与C++之间类型对照](../appendix/type-correspondence.md)
+
 ## 调用示例
 
 ```csharp
