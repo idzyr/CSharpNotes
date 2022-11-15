@@ -146,6 +146,7 @@
     * [Slider【滑动条】](./wpf/controls/contents/slider.md)
     * [DataGrid【数据网格】](./wpf/controls/contents/data-grid.md)
     * [InkCanvas【墨迹画布】](./wpf/controls/contents/ink-canvas.md)
+    * [Hyperlink【超链接】](./wpf/controls/contents/hyperlink.md)
 * 布局
   * [概览](./wpf/layouts/overview.md)
   * [StackPanel【堆栈布局】](./wpf/layouts/stack-panel.md)
