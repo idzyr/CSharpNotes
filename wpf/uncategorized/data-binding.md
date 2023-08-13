@@ -301,13 +301,13 @@ Binding在源与⽬标之间架起了沟通的桥梁，默认情况下数据既�
 
 Binding控制数据流方向是BindingMode枚举类型
 
-| 值             | 说明             | 备注                                                         |
-| -------------- | ---------------- | ------------------------------------------------------------ |
-| Default        | 默认             | 根据⽬标的实际情况来确定，⽐如若是可编辑的（如<br/>TextBox.Text属性），Default就采⽤双向模式；若是只读的（如<br/>TextBlock.Text）则采⽤单向模式。 |
-| OneTime        | 一次             | 单向传递数据仅生效一次 OneWay的简化                          |
-| OneWay         | 单向（源到目标） | 当绑定源（源）更改时，更新绑定目标（目标）属性               |
-| OneWayToSource | 目标到原（单向） | 当目标属性更改时更新源属性。                                 |
-| TwoWay         | 双向             | 导致对源属性或目标属性的更改可自动更新对方。                 |
+| 值             | 说明               | 备注                                                         |
+| -------------- | ------------------ | ------------------------------------------------------------ |
+| Default        | 默认               | 根据⽬标的实际情况来确定，⽐如若是可编辑的（如<br/>TextBox.Text属性），Default就采⽤双向模式；若是只读的（如<br/>TextBlock.Text）则采⽤单向模式。 |
+| OneTime        | 一次               | 单向传递数据仅生效一次 OneWay的简化                          |
+| OneWay         | 单向（源到目标）   | 当绑定源（源）更改时，更新绑定目标（目标）属性               |
+| OneWayToSource | 目标到原（反单向） | 当目标属性更改时更新源属性。                                 |
+| TwoWay         | 双向               | 导致对源属性或目标属性的更改可自动更新对方。                 |
 
 #### 控制数据更新时机
 
@@ -867,84 +867,315 @@ text.SetBinding(TextBlock.TextProperty, binding);
 
 ### 使⽤ADO.NET对象作为Binding的源
 
+使⽤ADO.NET类对数据库进⾏操作。常⻅的⼯作是从数据库中把数据读取到DataTable中，再把DataTable显⽰
+在UI列表控件⾥（如成绩单、博客⽂章列表、论坛帖⼦列表等）。尽管在流⾏的软件架构中并不把DataTable的数据直接显⽰在UI列表控件⾥⽽是先通过LINQ等⼿段把DataTable⾥的数据转换成恰当的⽤户⾃定义类型集合，但WPF也⽀持在列表控件与DataTable之间直接建⽴Binding。
 
+**ListBox展示DataTable；**
 
-## 绑定到元素控件对象
+- 假设有一些数据
 
-**XAML方式**
+  ```c#
+   /// <summary>
+   /// 模拟从数据库获取数据
+   /// </summary>
+   /// <returns></returns>
+   DataTable LoadData()
+   {
+  
+       DataTable dataTable = new DataTable();
+  
+       // 定义表的列：
+       dataTable.Columns.Add("ID", typeof(int));
+       dataTable.Columns.Add("Name", typeof(string));
+       dataTable.Columns.Add("Age", typeof(int));
+       // 添加行到DataTable中：
+       dataTable.Rows.Add(0, "John", 25);
+       dataTable.Rows.Add(1, "Amy", 30);
+       dataTable.Rows.Add(2, "Tom", 28);
+       dataTable.Rows.Add(2, "Any", 18);
+       dataTable.Rows.Add(2, "Mak", 38);
+  
+       return dataTable;
+   }
+  ```
 
-`{Binding ElementName=源控件名,Path=绑定属性名}` 在要绑定数据的控件的属性值里使用此附加属性既可以和源控件对应的属性绑定。绑定控件属性要和源控件属性类型对应，如目标控件FontSize属性是整数类型那么要绑定的源数据类型也要是整形，
+- 显⽰在⼀个ListBox⾥
+
+  ```xaml
+  <Window x:Class="DataBinding.ADOWindow"
+          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+          xmlns:local="clr-namespace:DataBinding"
+          mc:Ignorable="d"
+          Title="ADOWindow" Height="450" Width="800">
+      <StackPanel>
+          <ListBox x:Name="ListBox" Height="130" Margin="5" />
+          <Button Content="Load" Click="Button_Click"/>
+      </StackPanel>
+  </Window>
+  
+  ```
+
+- Button的Click事件处理器
+
+  ````c#
+     private void Button_Click(object sender, RoutedEventArgs e)
+     {
+         DataTable dataTable = LoadData();
+         
+         this.ListBox.DisplayMemberPath = "Name";
+         // public DataView DefaultView { get; } 获取可能包括筛选视图或游标位置的表的自定义视图
+         this.ListBox.ItemsSource = dataTable.DefaultView;
+     }
+  ````
+
+- 运行
+
+  ![image-20230810155308862](data-binding-images/image-20230810155308862.png)
+
+ `this.ListBox.ItemsSource = dataTable.DefaultView;` DataTable的DefaultView属性是⼀个DataView类型的对象，DataView类**实现了IEnumerable接⼝**，所以可以被赋值给ListBox.ItemsSource属性。
+
+**ListView展示DataTable（常用）；**
+
+改动XAML部分的代码如下
 
 ```xaml
-<!-- TextBlock的字体大小和Slider进行关联 -->
-<!-- 滑动条源控件 -->
-<Slider 
-            Width="400" 
-            Margin="10,10,0,0" 
-            Minimum="10"
-            Maximum="60"
-            x:Name="slider"/>
-        <!-- 目标控件文本块 -->
-        <TextBlock Text="拖动滑块改变字体大小" FontSize="{Binding ElementName=slider,Path=Value}"/>
+<Window x:Class="DataBinding.ADOWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DataBinding"
+        mc:Ignorable="d"
+        Title="ADOWindow" Height="450" Width="800">
+    <StackPanel>
+        <ListView x:Name="ListBox" Height="130" Margin="5">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Id" 
+                                    Width="60" 
+                                    DisplayMemberBinding="{Binding Id}"/>
+                    <GridViewColumn 
+                                    Header="Name" 
+                                    Width="80" 
+                                    DisplayMemberBinding="{Binding Name}"/>
+                    <GridViewColumn 
+                                    Header="Age" 
+                                    Width="60" 
+                                    DisplayMemberBinding="{Binding Age}"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <Button Content="Load" Click="Button_Click"/>
+    </StackPanel>
+</Window>
+
 ```
 
-**代码方式**
 
-```c
-/*————————————————————源控件———————————————————————————————————————*/
-            Binding binding = new Binding();
-            binding.Source = slider; //设置源控件对象
-            binding.Path = new PropertyPath("Value"); //绑定属性名
-            binding.Mode = BindingMode.OneWay; //绑定模式
 
-            /*———————————————————目标控件————————————————————————————————————————*/
-            //参数一 目标属性 参数二 要绑定的binding对象。
-            text.SetBinding(TextBlock.FontSizeProperty,binding);//设置Binding对象
-///////////////////////////////////////////////////////////////////////
-/*—————————————————————移除绑定——————————————————————————————————————*/
-            //参数一 移除绑定的目标对象 参数二 移除绑定的目标属性
-            BindingOperations.ClearBinding(text,TextBlock.FontSizeProperty);
+从字⾯上理解ListView和GridView应该是同⼀级别的控件，实际上远⾮这样！ListView是**ListBox的派⽣类**⽽GridView是**ViewBase的派⽣类**，ListView的View属性是⼀个**ViewBase类型的对象**，所以，GridView可以作为ListView的View来使⽤⽽不能当作独⽴的控件来使⽤。这⾥使⽤的理念是组合模式，即ListView“有⼀个”View，⾄于这个View是GridView还是其他什么类型的View则由程序员⾃由选择——⽬前只有⼀个GridView可⽤
+
+其次，GirdView的内容属性是Columns，这个属性是GridViewColumnCollection（列集合）类型对象。因为XAML⽀持对内容属性的简写，所以省略了`<GridView.Columns>…</GridView.Columns>`这层标签，直接在`<GridView>`的内容部分定义了三个GridViewColumn对象。GridViewColumn对象最重要的⼀个属性是DisplayMemberBinding（类型为BindingBase），使⽤这个属性可以指定这⼀列使⽤什么样的Binding去关联数据
+
+这与ListBox有点不同，ListBox使⽤的是DisplayMemberPath属性（类型为string）。如果想⽤更复杂的结构来表⽰这⼀列的标题（Header）或数据，则可为GridViewColumn **设置HeaderTemplate 和 CellTemplate 属性**，它们的类型都是DataTemplate。
+
+Buttom click事件处理
+
+```c#
+private void Button_Click(object sender, RoutedEventArgs e)
+{
+	DataTable dataTable = LoadData();
+	this.ListView.ItemsSource = dataTable.DefaultView;
+}
 ```
 
-## 绑定到非元素对象
+
+
+![image-20230810161018703](data-binding-images/image-20230810161018703.png)
+
+**DataTable能直接作为ItemsSource使用吗？;**
+
+通过上⾯的例⼦我们已经知道DataTable对象的DefaultView属性可以作为ItemsSource使⽤，但是不能直接使用DataTable会得到⼀个编译错误
+
+```c#
+  private void Button_Click(object sender, RoutedEventArgs e)
+  {
+      DataTable dataTable = LoadData();
+      
+      this.ListView.ItemsSource = dataTable; 
+      // 错误	CS0266	无法将类型“System.Data.DataTable”隐式转换为“System.Collections.IEnumerable”。存在一个显式转换(是否缺少强制转换?)
+  }
+```
 
 
 
-| 属性名 | 作用                         | 备注 |
-| ------ | ---------------------------- | ---- |
-| Source | 获取或设置要用作绑定源的对象 |      |
-|        |                              |      |
-|        |                              |      |
+显然，DataTable**不能直接拿来为ItemsSource赋值**。不过，当你把DataTable对象放在⼀个对象的DataContext属性⾥，并把ItemsSource与⼀个**既没有指定Source⼜没有指定Path的Binding**关联起来时，Binding却能⾃动找到它的DefaultView并当作⾃⼰的Source来使⽤：
 
-## 绑定模式
+```c#
+  private void Button_Click(object sender, RoutedEventArgs e)
+  {
+      DataTable dataTable = LoadData();
+      this.ListView.DataContext = dataTable;
+      this.ListView.SetBinding(ListView.ItemsSourceProperty,new Binding());
+  }
+```
 
-Binding的Mode属性指定
+所以，在代码中发现把DataTable⽽不是DefaultView作为DataContext的值，并且为ItemsSource设置⼀个既⽆Path⼜⽆Source的Binding时，千万别感觉迷惑。
 
-| 枚举值         | 作用                         | 备注 |
-| -------------- | ---------------------------- | ---- |
-| Default        | 使用目标属性的默认 Mode 值。 |      |
-| OneTime        | 单向传递数据仅生效一次       |      |
-| OneWay         | 单向传递数据                 |      |
-| OneWayToSource | 反单向传递数据               |      |
-| TwoWay         | 双向传递数据                 |      |
+### 使⽤XML数据作为Binding的源
 
-1. **单向模式；**当目标控件数据改变时，源控件不会发生改变。
-2. **双向模式；**当目标控件据改变时，源控件也会发生改变。
-3. **反单向模式；**目标控件向源控件传递数据，源控件不能向目标控件传递。
+当使⽤XML数据作为Binding的Source时我们将使⽤**XPath属性**⽽不是Path属性来指定数据的来源。
+
+以下会用到XPath表达式
+
+**案例；**
+
+把以下数据显示到ListView控件⾥
+
+```xaml
+<?xml version="1.0" encoding="utf-8" ?>
+<StudentList>
+  <Student id="1">
+    <Name>郭靖</Name>
+  </Student>
+  <Student id="2">
+    <Name>黄蓉</Name>
+  </Student>
+  <Student id="3">
+    <Name>杨过</Name>
+  </Student>
+  <Student id="4">
+    <Name>小龙女</Name>
+  </Student>
+</StudentList>
+```
+
+- UI代码
+
+  ```xaml
+  <Window x:Class="DataBinding.XAMLWindow"
+          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+          xmlns:local="clr-namespace:DataBinding"
+          mc:Ignorable="d"
+          Title="XAMLWindow" Height="450" Width="800">
+      <StackPanel>
+          <ListView x:Name="ListViewStudents" Height="130">
+              <ListView.View>
+                  <GridView>
+                      <GridViewColumn 
+                                      Header="Id" 
+                                      Width="80" 
+                                      DisplayMemberBinding="{Binding XPath=@Id}"/>
+                      <GridViewColumn 
+                                      Header="Name" 
+                                      Width="120" 
+                                      DisplayMemberBinding="{Binding XPath=Name}"/>
+                  </GridView>
+              </ListView.View>
+          </ListView>
+          <Button Content="Load" Click="Button_Click"/>
+      </StackPanel>
+  </Window>
+  
+  ```
+
+- Button的Click事件处理器
+
+  ```c#
+    private void Button_Click(object sender, RoutedEventArgs e)
+    {
+        XmlDocument doc = new XmlDocument();
+        doc.Load(@"E:\CsharpCode\wpf-code\WPF的学习\DataBinding\RawData.xml");
+  
+        // 允许以声明方式访问数据绑定的 XML 数据。
+        XmlDataProvider xDataProvider = new XmlDataProvider();
+        // 获取或设置要用作绑定源的 XmlDocument。
+        xDataProvider.Document = doc;
+        // 获取或设置用于生成数据集合的 XPath表达式查询。这样我们要把Student生成集合
+        xDataProvider.XPath = @"/StudentList/Student";
+  
+        this.ListViewStudents.DataContext = xDataProvider;
+        this.ListViewStudents.SetBinding(ListView.ItemsSourceProperty, new Binding());
+    }
+  ```
+
+  ![image-20230813155339618](data-binding-images/image-20230813155339618.png)
+
+XmlDataProvider的Source的属性可以直接指定XML⽂档所在的位置（⽆论XML⽂档存储在本地硬盘还是⽹络上）
+
+Click事件处理器也可以写成这样；
+
+```c#
+private void Button_Click(object sender, RoutedEventArgs e)
+{
+	// 允许以声明方式访问数据绑定的 XML 数据。
+	XmlDataProvider xDataProvider = new XmlDataProvider();
+	xDataProvider.Source = new Uri(@"E:\CsharpCode\wpf-code\WPF的学习\DataBinding\RawData.xml");
+
+	// 获取或设置用于生成数据集合的 XPath 查询。这样我们要把Student生成集合
+	xDataProvider.XPath = @"/StudentList/Student";
+
+	this.ListViewStudents.DataContext = xDataProvider;
+	this.ListViewStudents.SetBinding(ListView.ItemsSourceProperty, new Binding());
+}
+```
+
+**案例二；**
+
+使⽤TreeView控件来显⽰拥有若⼲层⽬录的⽂件系统，这次是把XML数据和XmlDataProvider对象直接写在XAML代码⾥。代码中⽤到了HierarchicalDataTemplate类，这个类具有名为ItemsSource的属性，可⻅由这种Template展⽰的数据是可以拥有⼦级集合的。
+
+```xaml
+<Window x:Class="DataBinding.XAMLWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DataBinding"
+        mc:Ignorable="d"
+        Title="XAMLWindow" Height="450" Width="800">
+    <Window.Resources>
+        <XmlDataProvider x:Key="xdp" XPath="FileSystem/Folder">
+            <x:XData>
+                <!-- xmlns="" 不要忘记  -->
+                <FileSystem xmlns="">
+                    <Folder Name="Books">
+                        <Folder Name="软件">
+                            <Folder Name="Window">
+                                <Folder Name="WPF"/>
+                                <Folder Name="MFC"/>
+                                <Folder Name="c++"/>
+                            </Folder>
+                        </Folder>
+                        <Folder Name="工具">
+                            <Folder Name="VSCode"/>
+                            <Folder Name="IDEA"/>
+                            <Folder Name="Playex"/>
+                        </Folder>
+                    </Folder>
+                </FileSystem>
+            </x:XData>
+        </XmlDataProvider>
+    </Window.Resources>
+    <StackPanel>
+        <TreeView ItemsSource="{Binding Source={StaticResource xdp}}">
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding XPath=Folder}">
+                    <TextBlock Text="{Binding XPath=@Name}"/>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+    </StackPanel>
+</Window>
+```
 
 
 
-## 数据更新时间
+![image-20230813170104868](data-binding-images/image-20230813170104868.png)
 
-适用于**OneWayToSource**和**TwoWay** 模式。
-
-`UpdateSourceTrigger` 获取或设置一个值，该值确定绑定源更新的执行时间。
-
-| 枚举值          | 作用                                                         | 备注 |
-| --------------- | ------------------------------------------------------------ | ---- |
-| Default         | 默认数据更新                                                 |      |
-| Explicit        | 只有在调用UpdateSource 方法时才会更新到源，否则所做的更改不会传播回源。 |      |
-| LostFocus       | 每当目标控件失去焦点时才更新到源                             |      |
-| PropertyChanged | 目标数据改变立刻更新到源                                     |      |
-
- 
+如果把XmlDataProvider直接写在XAML代码⾥，XML数据需要放在`<x:XData>…</x:XData>`标签⾥
