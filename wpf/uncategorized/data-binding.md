@@ -1179,3 +1179,387 @@ private void Button_Click(object sender, RoutedEventArgs e)
 ![image-20230813170104868](data-binding-images/image-20230813170104868.png)
 
 如果把XmlDataProvider直接写在XAML代码⾥，XML数据需要放在`<x:XData>…</x:XData>`标签⾥
+
+### 使⽤LINQ检索结果作为Binding的源
+
+> [C# 中的语言集成查询 (LINQ) | Microsoft Learn](https://learn.microsoft.com/zh-cn/dotnet/csharp/linq/)
+
+⾃3.0版开始，.NET Framework开始⽀持LINQ（Language-Integrated Query，语⾔集成查询），使⽤LINQ，我们可以⽅便地操作集合对象、DataTable对象和XML对象⽽不必动辄就把好⼏层foreach循环嵌套在⼀起却只是为了完成⼀个很简单的任务。
+
+LINQ查询的结果是⼀个IEnumerable<T>类型对象，⽽IEnumerable<T>⼜派⽣⾃IEnumerable，所以它可以作为列表控件的ItemsSource来使⽤
+
+使用之前Student1类
+
+ui代码
+
+```xaml
+<Window x:Class="DataBinding.LINQWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DataBinding"
+        mc:Ignorable="d"
+        Title="LINQWindow" Height="450" Width="800">
+    <StackPanel>
+        <ListView x:Name="ListViewStudent" Height="143">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn 
+                                    Header="Id" 
+                                    Width="60" 
+                                    DisplayMemberBinding="{Binding Id}"/>
+                    <GridViewColumn 
+                                    Header="Name" 
+                                    Width="100" 
+                                    DisplayMemberBinding="{Binding Name}"/>
+                    <GridViewColumn 
+                                    Header="Age" 
+                                    Width="80" 
+                                    DisplayMemberBinding="{Binding Age}"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <Button Content="Load" Click="Button_Click"/>
+    </StackPanel>
+</Window>
+
+```
+
+**数据在集合；**
+
+从⼀个已经填充好的`List<Student>`对象中检索出所有名字以字⺟T开头的学⽣
+
+```c#
+   private void Button_Click(object sender, RoutedEventArgs e)
+   {
+       List<Student1> student1s = new List<Student1>()
+       {
+           new Student1(){Id = 0,Name = "Join",Age = 33},
+           new Student1(){Id = 1,Name = "Tim",Age = 22},
+           new Student1{Id = 2,Name = "Zoom",Age = 3},
+           new Student1(){Id = 3,Name = "Tom",Age = 21},
+           new Student1(){Id = 4,Name = "Mike",Age = 11},
+           new Student1(){Id = 5,Name = "Vni",Age = 12}
+           
+       };
+       this.ListViewStudent.ItemsSource = from stu in student1s where stu.Name.StartsWith("T") select stu;
+   }
+```
+
+**DataTable对象⾥；**
+
+如果数据存放在⼀个已经填充好的DataTable对象⾥，则代码是这样：
+
+```c#
+  private void Button_Click(object sender, RoutedEventArgs e)
+  {
+    	DataTable dataTable = LoadData();
+      	this.ListViewStudent.ItemsSource =
+          from row in dataTable.Rows.Cast<DataRow>()
+          where Convert.ToString(row["Name"]).StartsWith("T")
+          select new Student1()
+          {
+              Id = int.Parse(row["Id"].ToString()),
+              Name = row["Name"].ToString(),
+              Age = int.Parse(row["Age"].ToString())
+          };
+
+  }
+
+ /// <summary>
+ /// 模拟从数据库获取数据
+ /// </summary>
+ /// <returns></returns>
+ DataTable LoadData()
+ {
+
+     DataTable dataTable = new DataTable();
+
+     // 定义表的列：
+     dataTable.Columns.Add("ID", typeof(int));
+     dataTable.Columns.Add("Name", typeof(string));
+     dataTable.Columns.Add("Age", typeof(int));
+     // 添加行到DataTable中：
+     dataTable.Rows.Add(0, "John", 25);
+     dataTable.Rows.Add(1, "Amy", 30);
+     dataTable.Rows.Add(3, "Tom", 28);
+     dataTable.Rows.Add(4, "Any", 18);
+     dataTable.Rows.Add(5, "Mak", 38);
+
+     return dataTable;
+ }
+```
+
+**数据存储在XML⽂件⾥;**
+
+```xml
+<?xml version="1.0" encoding="utf-8" ?>
+<StudentList>
+  <Calss>
+    <Student Id="0" Name="Join" Age="33" />
+    <Student Id ="1" Name = "Tim" Age = "22"/>
+    <Student Id ="2" Name = "Zoom" Age = "3"/>
+  </Calss>
+  <Calss>
+    <Student Id="3" Name = "Tom" Age = "21" />
+    <Student Id ="4" Name = "Mike" Age = "11" />
+    <Student Id ="5" Name = "Vni" Age = "12"/>
+  </Calss>
+</StudentList>
+```
+
+
+
+注意 xdoc.Descendants("Student")这个⽅法，它可以跨越XML的层级
+
+```c#
+private void Button_Click(object sender, RoutedEventArgs e)
+{
+	XDocument xDocument = XDocument.Load(@"E:\CsharpCode\wpf-code\WPF的学习\DataBinding\RawData2.xml");
+	this.ListViewStudent.ItemsSource =
+		from element in xDocument.Descendants("Student")
+		where element.Attribute("Name").Value.StartsWith("T")
+		select new Student1()
+		{
+			Id = int.Parse(element.Attribute("Id").Value),
+			Name = element.Attribute( "Name").Value,
+			Age = int.Parse(element.Attribute("Age").Value)
+		};
+}
+```
+
+程序的运⾏效果如图
+
+![image-20230821163741054](data-binding-images/image-20230821163741054.png)
+
+### 使⽤ObjectDataProvider对象作为Binding的资源
+
+当⼀个类的部分数据不是使⽤属性暴露出来，而是通过**⽅法的返回值暴露**。这时候就需要使⽤ObjectDataProvider
+来**包装作为Binding源的数据对象了**。
+
+> ObjectDataProvider使用反射来实现对被封装对象的属性和方法的访问。
+
+ObjectDataProvider，顾名思义就是把对象作为数据源提供给Binding。前⾯还提到过XmlDataProvider，也就是把XML数据作为数据源提供给Binding。这两个类的⽗类都是DataSourceProvider抽象类。ObjectDataProvider是将一个对象封装为数据源，使得可以在WPF应用程序中对其属性和方法进行数据绑定和操作的工具。
+
+有⼀个名为Calculator的类，它具有计算加、减、乘、除的⽅法：
+
+````c#
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace DataBinding
+{
+    internal class Calculator
+    {
+        /// <summary>
+        /// 加法
+        /// </summary>
+        /// <param name="ang1"></param>
+        /// <param name="ang2"></param>
+        /// <returns></returns>
+        public string Add(string ang1,string ang2)
+        {
+            double x = 0;
+            double y = 0;
+            double z = 0;
+
+            /*
+             * public static bool TryParse( string s,out double result)
+             参数
+                - s 包含要转换的数字的字符串。
+                - result 当此方法返回时，如果转换成功，则包含与 s 参数等效的双精度浮点数；如果转换失败，则包含零。 
+                    如果 s 参数为 null 或 String.Empty、不是有效格式的数字，或者表示的数字小于 MinValue 或大于 MaxValue，则转换失败。 
+                    此参数未经初始化即进行传递；最初在 result 中提供的任何值都会被覆盖。 
+             */
+            if (double.TryParse(ang1,out x) && double.TryParse(ang2,out y))
+            {
+                z = x + y;
+                return z.ToString();
+            }
+            return "Input Error";
+        }
+        // 其它方法...
+    }
+}
+
+````
+
+
+
+**如何创建ObjectDataProvider；**
+
+```xaml
+<Window x:Class="DataBinding.ObjectDataProviderWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DataBinding"
+        mc:Ignorable="d"
+        Title="ObjectDataProviderWindow" Height="450" Width="800">
+    <StackPanel>
+        <Button Click="Button_Click" Content="创建ObjectDataProvider"/>
+    </StackPanel>
+</Window>
+
+```
+
+```c#
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            ObjectDataProvider objectDataProvider = new ObjectDataProvider();
+            objectDataProvider.ObjectInstance = new Calculator();
+            objectDataProvider.MethodName = "Add"; // 指定要调用的方法
+            objectDataProvider.MethodParameters.Add("100"); // 添加参数
+            objectDataProvider.MethodParameters.Add("200");
+            MessageBox.Show(objectDataProvider.Data.ToString());
+        }
+```
+
+
+
+![image-20230821213619026](data-binding-images/image-20230821213619026.png)
+
+
+
+**Binding的Source来使⽤；**
+
+实现的功能是在上⾯两个TextBox输⼊数字后，第3个TextBox能实时地显⽰数字的和
+
+```xaml
+<Window x:Class="DataBinding.ObjectDataProviderWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DataBinding"
+        mc:Ignorable="d"
+        Title="ObjectDataProviderWindow" Height="450" Width="800">
+    <StackPanel>
+        <TextBox x:Name="TextBoxAng2" Margin="5"/>
+        <TextBox x:Name="TextBoxAng1" Margin="5"/>
+        <TextBox x:Name="TextBoxResult" Margin="5"/>
+    </StackPanel>
+</Window>
+
+```
+
+SetBinding的⽅法处理
+
+```c#
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+
+namespace DataBinding
+{
+    /// <summary>
+    /// ObjectDataProviderWindow.xaml 的交互逻辑
+    /// </summary>
+    public partial class ObjectDataProviderWindow : Window
+    {
+        public ObjectDataProviderWindow()
+        {
+            InitializeComponent();
+            SetBinding();
+        }
+        private void SetBinding()
+        {
+            // 创建并配置ObjectDataProvider对象
+            ObjectDataProvider odp = new ObjectDataProvider();
+            odp.ObjectInstance = new Calculator();
+            odp.MethodName = "Add";
+            odp.MethodParameters.Add("0");
+            odp.MethodParameters.Add("0");
+            // 创建配置Binding
+            Binding bindingToAng1 = new Binding("MethodParameters[0]")
+            {
+                /*
+                 BindsDirectlyToSource = true
+                 把从UI元素收集到的数据写⼊其直接Source（即ObjectDataProvider对象）
+                 ⽽不是被ObjectDataProvider对象包装着的Calculator对象。
+                 */
+                Source = odp,
+                BindsDirectlyToSource = true, 
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+            };
+
+            Binding bindingToAng2 = new Binding("MethodParameters[1]")
+            {
+                Source = odp,
+                BindsDirectlyToSource = true,
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+            };
+
+            Binding bindingToResult = new Binding(".") { Source = odp};
+
+            this.TextBoxAng1.SetBinding(TextBox.TextProperty, bindingToAng1);
+            this.TextBoxAng2.SetBinding(TextBox.TextProperty, bindingToAng2);
+            this.TextBoxResult.SetBinding(TextBox.TextProperty, bindingToResult);
+        }
+    }
+}
+
+```
+
+执行结果
+
+
+
+![image-20230821221046057](data-binding-images/image-20230821221046057.png)
+
+- 除了`odp.ObjectInstance` 还可以通过被包装对象类型和希望调⽤的构造器创建包装对象。
+
+```c#
+obp.ObjectType = typeof(YouClass)
+obp.ConstructorParameters.Add(argl);
+obp.ConstructorParameters.Add(arg2);    
+```
+
+> 因为在XAML⾥创建和使⽤对象⽐较⿇烦、可读性差，所以⼀般会在XAML代码中使⽤这种指定类型和构造器的办法。
+
+- `bindingToAng1`它的Source是ObjectDataProvider对象、Path是ObjectDataProvider对象MethodParameters属性所引⽤的**集合**中的第⼀个元素。`BindsDirectlyToSource = true`把从UI元素收集到的数据写⼊其直接Source（即ObjectDataProvider对象）⽽不是被ObjectDataProvider对象包装着的Calculator对象。
+
+- `bindingToResult`但使⽤“`.`”作为Path——前⾯说过，当数据源本⾝就代表数据的时候就使⽤“`.`”作Path，并且“`.`”在XAML代码⾥可以省略不写。
+
+  > **注意**
+  > 在把ObjectDataProvider对象当作Binding的Source来使⽤时，这个对象本⾝就代表
+  > 了数据，所以这⾥的Path使⽤的是“.”⽽⾮其Data属性。
+
+⼀般情况下，数据从哪⾥来哪⾥就是Binding的Source、数据到哪⾥去哪⾥就应该是Binding的Target。按这个理论，前两个TextBox应该是ObjectDataProvider对象的数据源，⽽ObjectDataProvider对象⼜是最后⼀个TextBox的数据源。但实际上，三个TextBox都以ObjectDataProvider对象为数据源，只是前两个TextBox在Binding的数据流向上做了限制。这样做的原因不外乎有两个：
+
+1. ObjectDataProvider 的 MethodParameters 不 是 依 赖 属性，不能作为Binding的⽬标。
+2. 数据驱动UI的理念要求尽可能地使⽤数据对象作为Binding的Source⽽把UI元素当作Binding的Target。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
