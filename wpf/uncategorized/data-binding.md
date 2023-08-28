@@ -239,6 +239,8 @@ Binding⼀词在汉语中究竟是什么意思呢？⼤概是出于⽅便，业�
 
 ### 把控件作为Binding源与Binding标记扩展
 
+> 谁是绑定目标就设置Binding属性。
+
 把⼀个TextBox的Text属性关联在了Slider的Value属性上。
 
 ```xaml
@@ -1544,6 +1546,600 @@ obp.ConstructorParameters.Add(arg2);
 
 1. ObjectDataProvider 的 MethodParameters 不 是 依 赖 属性，不能作为Binding的⽬标。
 2. 数据驱动UI的理念要求尽可能地使⽤数据对象作为Binding的Source⽽把UI元素当作Binding的Target。
+
+### 使⽤Binding的RelativeSource（相对资源）
+
+有些时候我们不能确定作为Source的对象叫什么名字，但知道它与作为Binding⽬标的对象在**UI布局上有相对关系**，⽐如控件⾃⼰**关联⾃⼰的某个数据、关联⾃⼰某级容器的数据**。这时候我们就要使⽤Binding的RelativeSource属性。
+
+#### 关联某容器数据
+
+RelativeSource属性的数据类型为RelativeSource类
+
+下⾯这段XAML代码表⽰的是多层布局控件内放置着⼀个TextBox：
+
+```xaml
+<Window x:Class="DataBinding.RelativeSourceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DataBinding"
+        mc:Ignorable="d"
+        Title="RelativeSourceWindow" Height="450" Width="800">
+    <Grid x:Name="G1" Background="AliceBlue" Margin="10">
+        <DockPanel x:Name="D1" Background="AntiqueWhite" Margin="10">
+            <Grid x:Name="G2" Background="Violet" Margin="10">
+                <DockPanel x:Name="D2" Background="Pink" Margin="10">
+                    <TextBlock x:Name="TextBox1" FontSize="24" Margin="10"/>
+                </DockPanel>
+            </Grid>
+        </DockPanel>
+    </Grid>
+</Window>
+
+```
+
+层级关系
+
+![image-20230823213747690](data-binding-images/image-20230823213747690.png)
+
+我们把TextBox的Text属性关联到外层容器的Name属性上
+
+```c#
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+
+namespace DataBinding
+{
+    /// <summary>
+    /// RelativeSource.xaml 的交互逻辑
+    /// </summary>
+    public partial class RelativeSourceWindow : Window
+    {
+        public RelativeSourceWindow()
+        {
+            InitializeComponent();
+            // 通过查找上级模式创建RelativeSource对象
+            RelativeSource relativeSource = new RelativeSource(RelativeSourceMode.FindAncestor);
+            relativeSource.AncestorLevel = 1; //Binding控件起始层级偏移量
+            relativeSource.AncestorType = typeof(Grid); //寻找的上级节点类型
+
+            Binding binding = new Binding("Name") { RelativeSource = relativeSource };
+            this.TextBox1.SetBinding(TextBox.TextProperty,binding);
+        }
+    }
+}
+
+```
+
+对应xaml代码
+
+```xaml
+ <TextBox x:Name="TextBox1"
+          Text="{
+Binding RelativeSource={RelativeSource FindAncestor
+                ,AncestorLevel=1
+                ,AncestorType={x:Type Grid}}
+     ,Path=Name
+                }"
+```
+
+
+
+![image-20230822160009579](data-binding-images/image-20230822160009579.png)
+
+**属性；**
+
+- AncestorLevel 指的是以Binding⽬标控件为**起点**的层级偏移量——d2的偏移量是1、g2的偏移量为2，依次类推
+
+- AncestorType 告诉Binding寻找哪个类型的对象作为⾃⼰的源，不是这个类型的对象会被跳过
+
+
+
+#### 关联到自身
+
+TextBox需要关联⾃⾝的Name属性，
+
+```c#
+ public partial class RelativeSourceWindow : Window
+ {
+     public RelativeSourceWindow()
+     {
+         InitializeComponent();
+         
+         RelativeSource relativeSource = new RelativeSource();
+         relativeSource.Mode = RelativeSourceMode.Self;
+
+         Binding binding = new Binding("Name") { RelativeSource = relativeSource };
+         this.TextBox1.SetBinding(TextBox.TextProperty, binding);
+     }
+ }
+```
+
+
+
+![image-20230822211747059](data-binding-images/image-20230822211747059.png)
+
+**Mode属性；**
+
+获取或设置一个 RelativeSourceMode枚举类型值，Mode属性该值描述**绑定源相对于绑定目标的位置**。RelativeSourceMode 枚举类型
+
+| 值              | 说明                                                         |
+| --------------- | ------------------------------------------------------------ |
+| FindAncestor    | 引用数据绑定元素父链中的上级。 您可以使用它**绑定到特定类型或其子类的上级**。 |
+| PreviousData    | 允许您绑定所显示数据项列表中以前的数据项（不是包含数据项的控件）。 |
+| Self            | 引用您对其设置绑定的元素，并允许您将该元素的一个属性绑定到**同一元素**中的其他属性。 |
+| TemplatedParent | 引用应用了模板（其中有数据绑定元素）的元素。 这类似于设置 TemplateBindingExtension，并仅当  Binding  在模板中时适用。 |
+
+RelativeSource类还有3个静态属性：PreviousData、Self和TemplatedParent，他们的类型是
+RelativeSource类。实际上这3个静态属性就是创建⼀个RelativeSource实例、把实例的Mode属性设置为相应的值，然后返回这个实例。之所以准备这3个静态属性是为了在XAML代码⾥直接获取RelativeSource实例
+
+
+
+## Binding对数据的转换与校验
+
+Binding的作⽤就是架在Source与Target之间的桥梁，数据可以在这座桥梁的帮助下来流通。就像现实世界中的
+桥梁会设置⼀些关卡进⾏安检⼀样，Binding这座桥上也可以设置关卡对数据的有效性进⾏检验，不仅如此，当Binding两端要求使⽤不同的数据类型时，我们还可以为数据设置转换器。
+
+- Binding⽤于数据有效性校验的关卡是它的ValidationRules属性，
+- ⽤于数据类型转换的关卡是它的Converter属性
+
+### Binding的数据校验
+
+- Binding的ValidationRules属性类型是`Collection<ValidationRule>，`
+
+- 每个Binding设置多个数据校验条件
+
+- 每个条件是⼀个ValidationRule类型对象。ValidationRule类是个抽象类,
+
+  我们需要创建它的派⽣类并实现它的Validate⽅法，Validate⽅法的**返回值是ValidationResult类型对象**，
+
+  如果校验通过，就把ValidationResult对象的IsValid属性设为true，反之，需要把IsValid属性设为false并为其ErrorContent属性设置⼀个合适的消息内容（⼀般是个字符串）。
+
+在UI上绘制⼀个TextBox和⼀个Slider，以 Slider 为 源 TextBox为⽬标进行Binding。Slider的取值范围是0到100，我们需要校验TextBox⾥输⼊的值是不是在0到100这个范围内也就是目标到源的数据
+
+```xaml
+<Window x:Class="DataBinding.ValidationRuleWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DataBinding"
+        mc:Ignorable="d"
+        Title="ValidationRuleWindow" Height="450" Width="800">
+    <StackPanel>
+        <TextBox x:Name="TxtBox1" Margin="5"/>
+        <Slider x:Name="Slider1" Minimum="0" Maximum="100"/>
+    </StackPanel>
+</Window>
+
+```
+
+准备⼀个ValidationRule的派⽣类，实现我们的校验规则
+
+```c#
+public class RangeValidationRule : ValidationRule
+  {
+      // 实现Validate方法
+      public override ValidationResult Validate(object value, CultureInfo cultureInfo)
+      {
+          double d = 0;
+          if(double.TryParse(value.ToString(),out d))
+          {
+              if(d >= 0 && d <= 100)
+              {
+                  /**
+                   * public ValidationResult(bool isValid, object errorContent);
+                   * 参数；
+                   *  - bool isValid 校验是否成功
+                   *  - object errorContent 校验错误时消息
+                   */
+                  return new ValidationResult(true,null);
+              }
+          }
+
+          return new ValidationResult(false, "Validation Failed");
+      }
+}
+```
+
+建立Binding
+
+```c#
+ public partial class ValidationRuleWindow : Window
+ {
+     public ValidationRuleWindow()
+     {
+         InitializeComponent();
+
+         Binding binding = new Binding("Value") {Source = this.Slider1 };
+         binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
+         // 设置数据校验规则
+         RangeValidationRule rangeValidationRule = new RangeValidationRule();
+         binding.ValidationRules.Add(rangeValidationRule);
+
+
+         this.TxtBox1.SetBinding(TextBox.TextProperty,binding);
+
+     }
+ }
+```
+
+当输⼊0到100之间的值时程序正常显⽰，但输⼊这个区间之外的值或不能被解析的值时TextBox会显⽰红⾊边框，表
+⽰值是错误的，**不能把它传递给Source**
+
+![image-20230824142434985](data-binding-images/image-20230824142434985.png)
+
+**更改默认检验行为；**
+
+Binding进⾏校验时的默认⾏为是认为来⾃Source的数据总是正确的，**只有来⾃Target的数据需要检验**，因为Target多为UI控件，所以等价于⽤户输⼊的数据，有可能有问题，为了不让有问题的数据污染Source。
+
+Binding只在Target**被外部⽅法更新**时校验数据，⽽**来⾃Binding的Source数据**更新Target时是不会进⾏校验的。
+
+如果想改变这种⾏为，或者说**当来⾃Source的数据也有可能出问题时**，我们就需要将校验条件（ValidationRule 类）的ValidatesOnTargetUpdated属性设为true。
+
+先把slider1的取值范围由0到100改成-10到110
+
+```xaml
+ <Slider x:Name="Slider1" Minimum="-10" Maximum="110"/>
+```
+
+然后把设置Binding的代码改为：
+
+```c#
+ public partial class ValidationRuleWindow : Window
+ {
+     public ValidationRuleWindow()
+     {
+         InitializeComponent();
+
+         Binding binding = new Binding("Value") {Source = this.Slider1 };
+         binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
+         // 设置数据校验规则
+         RangeValidationRule rangeValidationRule = new RangeValidationRule();
+         // 获取或设置一个值，该值指示当 Binding  的目标更新时是否运行验证规则
+         rangeValidationRule.ValidatesOnTargetUpdated = true;
+         binding.ValidationRules.Add(rangeValidationRule);
+
+
+         this.TxtBox1.SetBinding(TextBox.TextProperty,binding);
+
+     }
+ }
+```
+
+这样，当Slider的滑块移出有效范围时TextBox也会显⽰校验失败，这样我们就同时对源和目标之间的双向数据都做检验了。
+
+![image-20230824150758952](data-binding-images/image-20230824150758952.png)
+
+**显示检验错误信息；**
+
+当校验错误的时候Validate⽅法返回的，ValidationResult对象携带着⼀条错误消息，如何显⽰这条消息呢？
+
+想要做到这⼀点，需要⽤到路由事件（Routed Event）。
+
+Binding对象的`NotifyOnValidationError`属性设为true，
+
+这样当数据**校验失败**的时候Binding会像报警器⼀样**发出⼀个信号**，这个信号会以Binding对象的Target为起点在UI元素树上传播。信号每到达⼀个结点，如果这个结点上设置有对这种信号的侦听器（事件处理器），那么这个侦听器就会被触发⽤以处理这个信号。信号处理完后，程序员还可以选择是让信号继续向下传播还是就此终⽌——这就是路由事件，信号在UI元素树上的传递过程就称为路由（Route）。
+
+```c#
+ public partial class ValidationRuleWindow : Window
+ {
+     public ValidationRuleWindow()
+     {
+         InitializeComponent();
+
+         Binding binding = new Binding("Value") {Source = this.Slider1 };
+         binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
+         // 设置数据校验规则
+         RangeValidationRule rangeValidationRule = new RangeValidationRule();
+         // 获取或设置一个值，该值指示当 Binding  的目标更新时是否运行验证规则
+         rangeValidationRule.ValidatesOnTargetUpdated = true;
+         binding.ValidationRules.Add(rangeValidationRule);
+         // 发送检验失败路由事件
+         binding.NotifyOnValidationError = true;
+         // 添加指定路由事件类型处理程序
+         this.TxtBox1.AddHandler(Validation.ErrorEvent, new RoutedEventHandler(ValidationError));
+
+         this.TxtBox1.SetBinding(TextBox.TextProperty,binding);
+
+     }
+     /// <summary>
+     /// 数据检验失败处理
+     /// </summary>
+     /// <param name="sendr"></param>
+     /// <param name="e"></param>
+     void ValidationError(object sendr,RoutedEventArgs e)
+     {
+         // 获取指定元素的 Errors 附加属性的值。返回一个ReadOnlyObservableCollection<ValidationError>泛型集合
+         if (Validation.GetErrors(this.TxtBox1).Count > 0)
+         {
+             this.TxtBox1.ToolTip = Validation.GetErrors(this.TxtBox1)[0].ErrorContent.ToString();
+         }
+     }
+
+
+ }
+```
+
+程序运⾏时如果校验失败，TextBox的ToolTip就会提⽰⽤户
+
+![image-20230824154618495](data-binding-images/image-20230824154618495.png)
+
+### Binding的数据转换
+
+在上面案例中，Slider的Value属性是double类型值、TextBox的Text属性是string类型值，在C#这种强类型（strong-typed）语⾔中却可以往来⾃如，这是怎么回事呢？
+
+Binding还有另外⼀种机制称为数据转换（DataConvert），当Source端Path所关联的数据与Target端⽬标属性数据
+类型不⼀致时，我们可以添加数据转换器（DataConverter）。上⾯提到的问题实际上是double类型与string类型互相转换的问题，因为处理起来⽐较简单，所以WPF类库就⾃动替我们做了但有些类型之间的转换就不是WPF能替我们做的了，例如下⾯这些情况：
+
+- Source⾥的数据是Y、N和X三个值（可能是char类型、string类型或⾃定义枚举类型），UI上对应的是CheckBox控件，需要把这三个值映射为它的IsChecked属性值（bool?类型）。
+- 当TextBox⾥已经输⼊了⽂字时⽤于登录的Button才会出现，这是string类型与Visibility枚举类型或bool类型之间的转换（Binding的Mode将是OneWay）
+- Source⾥的数据可能是Male或Female（string或枚举），UI上对应的是⽤于显⽰头像的Image控件，这时候需要把Source⾥的值转换成对应的头像图⽚URI（亦是OneWay）。
+
+我们只能⾃⼰动⼿写Converter，⽅法是创建⼀个类并让这个类实现IValueConverter接⼝。IValueConverter接⼝定义如下：
+
+```c#
+public interface IValueConverter
+{
+    // Source流向Target时调用 (数据源到目标转换)
+	object Convert(object value, Type targetType, object parameter, CultureInfo culture);
+	// Target流向Source时调用 （目标到数据源转换）
+    object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture);
+}
+```
+
+当数据从Binding的Source流向Target时，Convert⽅法将被调⽤；反之，ConvertBack⽅法将被调⽤。
+
+这两个⽅法的参数列表⼀模⼀样：
+
+- 第⼀个参数为object，最⼤限度地保证了Converter的重⽤性（可以在⽅法体内对实际类型进⾏判断）
+- 第⼆个参数⽤于确定⽅法的返回类型（个⼈认为形参名字叫outputType⽐targetType要好，可以避免与Binding的Target混淆）
+- 第三个参数⽤于把额外的信息传⼊⽅法，若需要传递多个信息则可把信息放⼊⼀个集合对象来传⼊⽅法。
+
+Binding对象的Mode属性会影响到这两个⽅法的调⽤。
+
+- 如果Mode为TwoWay或Default⾏为与TwoWay⼀致则两个⽅法都有可能被调⽤
+- 如果Mode为OneWay或Default⾏为与OneWay⼀致则只有Convert⽅法会被调⽤；其他情况同理。
+
+例⼦是⼀个Converter的综合实例，程序的⽤途是在列表⾥向玩家显⽰⼀些军⽤⻜机的状态。
+
+创建⼏个⾃定义数据类型：
+
+```c#
+namespace DataBinding
+{
+    /// <summary>
+    /// 飞机种类
+    /// </summary>
+    public enum Category
+    {
+        /// <summary>
+        /// 轰炸机
+        /// </summary>
+        Bomber,
+        /// <summary>
+        /// 战斗机
+        /// </summary>
+        Fighter
+    }
+    /// <summary>
+    /// 飞机状态
+    /// </summary>
+    public enum State
+    {   
+        /// <summary>
+        /// 可用
+        /// </summary>
+        Available,
+        /// <summary>
+        /// 禁用
+        /// </summary>
+        Locked,
+        /// <summary>
+        /// 未知
+        /// </summary>
+        Unknown
+    }
+
+    internal class Plane
+    {
+        public string Name { get; set; }
+        public Category Category { get; set; }
+        public State State { get; set; }
+    }
+
+
+}
+```
+
+
+
+在UI⾥Plane的Category属性被映射为轰炸机或战⽃机的图标
+
+> 不要忘记把图片生成属性设置为资源否则找不到图标会出现
+
+![image-20230825204405169](data-binding-images/image-20230825204405169.png)
+
+Plane的State属性在UI⾥被映射为CheckBox。
+
+因为存在以上两个映射关系，我们需要提供两个Converter：
+
+- ⼀个是由Category类型单向转换为string类型（XAML编译器能够把string对象解析为图⽚资源）
+
+  ```c#
+   internal class CategoryToSourceConverter : IValueConverter
+   {
+  
+       // category 转换为Uri
+       public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+       {
+           Category c = (Category) value;
+           switch (c)
+           {
+               case Category.Bomber:
+                   // XAML编译器能够把string对象解析为图⽚资源
+                   return @"\icons\Bomber.png";
+               case Category.Fighter:
+                   return @"\icons\Fighter.png";
+               default:
+                   return null;
+           }
+  
+       }
+       //不会执行
+       // 因为是单向绑定只会调用数据源到目标转换
+       public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+       {
+           throw new NotImplementedException();
+       }
+   }
+  ```
+
+  
+
+- 另⼀个是在State与bool?类型之间双向转换。
+
+  ```c#
+   internal class StateToNullableBoolConverter : IValueConverter
+   {
+       // State转换为Bool
+       public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+       {
+           State s = (State)value;
+           switch (s)
+           {
+               case State.Available:
+                   return true;
+               case State.Locked:
+                   return false;
+               case State.Unknown:
+               default:
+                   return null;
+  
+           }
+  
+       }
+  
+       // Bool转换为State
+       public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+       {
+           bool? v = (bool?)value;
+           switch (v)
+           {
+               case true:
+                   return State.Available;
+               case false: 
+                   return State.Locked;
+               case null:
+               default:
+                   return State.Unknown;
+           }
+  
+       }
+   }
+  ```
+
+在布局中使用
+
+- 使用资源形式实例两个Converter对象。
+- 用ListBox显示飞机列表和两个按钮负责加载数据和保存数据。
+
+```xaml
+<Window x:Class="DataBinding.ValidationRuleWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DataBinding"
+        mc:Ignorable="d"
+        Title="ValidationRuleWindow" Height="450" Width="800">
+    <Window.Resources>
+        <local:CategoryToSourceConverter x:Key="ctsc"/>
+        <local:StateToNullableBoolConverter x:Key="stnbc"/>
+    </Window.Resources>
+	<StackPanel>
+     	<ListBox x:Name="ListBoxPlane" Height="100"></ListBox>
+    	 <Button x:Name="BtnLoad" Click="BtnLoad_Click" Content="Load"/>
+     	<Button x:Name="BtnSave" Click="BtnSave_Click" Content="Save"/>
+ 	</StackPanel>
+</Window>    
+```
+
+给ListBox设置数据显示的ItemTemplate的DataTemplate 
+
+我们需要显示飞机图标、名称和状态
+
+图标显示和状态显示分别都设置上我们自定义的转换器
+
+```xaml
+ <ListBox x:Name="ListBoxPlane" Height="100">
+     <ListBox.ItemTemplate>
+         <DataTemplate>
+             <StackPanel Orientation="Horizontal">
+                 <Image Width="20" Height="20"
+                        Source="{Binding Path=Category, Converter={StaticResource ctsc}}"/>
+                 <TextBlock Text="{Binding Name}" Width="20" Margin="80,0"/>
+                 <CheckBox IsThreeState="True" 
+                           IsChecked="{Binding Path=State,Converter={StaticResource stnbc}}"/>
+             </StackPanel>
+         </DataTemplate>
+     </ListBox.ItemTemplate>
+ </ListBox>
+```
+
+
+
+Load按钮的Click事件处理器负责把⼀组⻜机的数据赋值给ListBox的ItemsSource属性，Save按钮的Click事件处理器负责把⽤户更改过的数据写⼊⽂件
+
+```c#
+   private void BtnLoad_Click(object sender, RoutedEventArgs e)
+   {
+       List<Plane> planeList = new List<Plane>()
+       {
+           new Plane(){Category = Category.Bomber,Name = "B-J",State = State.Unknown},
+           new Plane() { Category = Category.Fighter, Name = "B-2", State = State.Unknown },
+           new Plane() { Category = Category.Bomber, Name = "F-22", State = State.Unknown },
+           new Plane() { Category = Category.Bomber, Name = "B-33", State = State.Unknown },
+           new Plane() { Category = Category.Fighter, Name = "F-18", State = State.Unknown },
+           new Plane() { Category = Category.Bomber, Name = "J-10", State = State.Unknown }
+       };
+       this.ListBoxPlane.ItemsSource = planeList;
+
+   }
+
+   private void BtnSave_Click(object sender, RoutedEventArgs e)
+   {
+       StringBuilder stringBuilder = new StringBuilder();
+       foreach( Plane p in ListBoxPlane.ItemsSource){
+           stringBuilder.AppendLine($"Category={p.Category},Name={p.Name},State={p.State}");
+       }
+       File.WriteAllText(@"E:\CsharpCode\wpf-code\WPF的学习\DataBinding\PlaneList.txt",stringBuilder.ToString());
+   }
+```
+
+执行结果
+
+![image-20230828223459897](data-binding-images/image-20230828223459897.png)
+
+
+
+
+
+
+
+
 
 
 
