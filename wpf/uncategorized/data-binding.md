@@ -86,6 +86,10 @@ Binding⼀词在汉语中究竟是什么意思呢？⼤概是出于⽅便，业�
 
 我们不但可以控制公路是在源与⽬标之间**双向通⾏还是某个⽅向的单⾏道**，还可以控制对**数据放⾏的时机**，甚⾄可以在桥上架设⼀些“关卡”⽤来**转换数据类型或者检验数据的正确性**。
 
+BindingBase类关系
+
+<img src="data-binding-images/image-20230829213839326.png" alt="image-20230829213839326" style="zoom:150%;" />
+
 **示例；**
 
 创建⼀个简单的数据源并通过Binding把它连接到UI元素上。
@@ -2135,17 +2139,115 @@ Load按钮的Click事件处理器负责把⼀组⻜机的数据赋值给ListBox�
 
 
 
+## MultiBinding（多路Binding）
+
+有的时候UI要需要显⽰的信息由不⽌⼀个数据来源决定，这时候就需要使⽤MultiBinding类
+
+同样MultiBinding也实现了BindingBase抽象类。也就是说，凡是能使⽤Binding对象的场合都能使⽤MultiBinding。
+
+MultiBinding具有⼀个名为**Bindings**的属性，其类型是`Collection<BindingBase>` ， 通过这个属性MultiBinding把⼀组Binding对象聚合起来， 处在这个集合中的Binding对象**可以拥有⾃⼰的数据校验与转换机制**，它们汇集起来的数据将共同决定传往MultiBinding⽬标的数据，
+
+![image-20230829215812562](data-binding-images/image-20230829215812562.png)
+
+考虑这样⼀个需求，有⼀个⽤于新⽤户注册的UI（包含4个TextBox和⼀个Button），还有如下⼀些限定：
+
+- 第⼀、⼆个TextBox输⼊⽤户名，要求内容⼀致。
+- 第三、四个TextBox输⼊⽤户E-Mail，要求内容⼀致。
+- 当TextBox的内容全部符合要求的时候，Button可⽤。
+
+```xaml
+<Window x:Class="DataBinding.MultiBindingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DataBinding"
+        mc:Ignorable="d"
+        Title="MultiBindingWindow" Height="450" Width="800">
+    <StackPanel>
+        <TextBox x:Name="TxtBoxName"/>
+        <TextBox x:Name="TxtBoxConfName"/>
+        <TextBox x:Name="TxtBoxEmail"/>
+        <TextBox x:Name="TxtBoxConfEmail"/>
+        <Button  x:Name="BtnSubmit" Content="Login" />
+    </StackPanel>
+</Window>
+
+```
+
+准备一个数据转器它实现`IMultiValueConverter`接⼝。负责将校验通过的TextBox（string类型转换为bool）给button使用
+
+```c#
+ internal class LoginMulitConverter : IMultiValueConverter
+ {
+     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+     {
+         /*
+           Cast<TResult> 方法将 IEnumerable 的元素强制转换为指定的类型。   
+           返回；
+               一个 IEnumerable<T>，包含强制转换为指定类型的源序列的每个元素。
+
+             Any()方法支持LINQ表达式
+          */
+         if (!values.Cast<string>().Any(text => string.IsNullOrEmpty(text))
+            && values[0].ToString() == values[1].ToString()
+            && values[2].ToString() == values[3].ToString()
+            )
+         {
+             return true;
+         }
+         return false;
+
+
+         throw new NotImplementedException();
+     }
+     // 单向绑定所以此方法不被调用
+     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+     {
+         throw new NotImplementedException();
+     }
+ }
+```
 
 
 
+SetMultiBinding()负责逻辑处理,
 
+```c#
+  public partial class MultiBindingWindow : Window
+  {
+      public MultiBindingWindow()
+      {
+          InitializeComponent();
 
+          SetMultiBinding();
+      }
 
+      private void SetMultiBinding()
+      {
+          var txtBoxName = new Binding("Text") {Source = this.TxtBoxName};
+          var txtBoxConfName = new Binding("Text") {Source = this.TxtBoxConfName};
+          var txtBoxEmail = new Binding("Text") { Source = this.TxtBoxEmail };
+          var txtBoxConfEmail = new Binding("Text") { Source = this.TxtBoxConfEmail };
 
+          MultiBinding multiBinding = new MultiBinding();
+          multiBinding.Mode = BindingMode.OneWay;
+          multiBinding.Bindings.Add(txtBoxName);
+          multiBinding.Bindings.Add(txtBoxConfName);
+          multiBinding.Bindings.Add(txtBoxEmail);
+          multiBinding.Bindings.Add(txtBoxConfEmail);
+          multiBinding.Converter = new LoginMulitConverter();
 
+          this.BtnSubmit.SetBinding(Button.IsEnabledProperty,multiBinding);
+      }
+  }
+```
 
+- MultiBinding对于添加⼦级Binding的顺序是敏感的，因为这个顺序决定了汇集到Converter⾥数据的顺序。
 
+运行结果
 
+![image-20230830212501321](data-binding-images/image-20230830212501321.png)
 
 
 
