@@ -362,33 +362,178 @@ public void GetTriangle_Test()
 
 ## 使用 IntelliTest 为代码生成单元测试
 
+IntelliTest 浏览你的 .NET 代码，以生成测试数据和单元测试套件。 对于代码中的每个语句，将生成执行该语句的测试输入。 为代码中的每个条件分支执行案例分析。 例如，分析 if 语句、断言和可能引发异常的所有操作。 此分析用于为你的每个方法生成参数化单元测试的测试数据，从而创建具有较高代码覆盖率的单元测试。
+
+> 注意；
+>
+> 只有企业版提供 IntelliTest。 面向 .NET Framework 的 C# 代码支持它。 当前不支持 .NET Core 和 .NET Standard。
+
+若要生成单元测试，你的类型必须是公共类。 否则，先创建单元测试，然后再生成它们。
+
+1. 打开解决方案。 然后打开包含你要测试的方法的类文件
+
+2. 在代码中右键单击一种方法并选择“**创建 IntelliTest**”，为方法中的代码创建生成单元测试项目。
+
+   ![image-20230907204548980](utiltest-images/image-20230907204548980.png)
+
+3. 选择使用默认格式以生成测试或自定义。
+
+   ![image-20230907204638094](utiltest-images/image-20230907204638094.png)
+
+4. 创建测试项目成功之后，选择“**运行 IntelliTest**”（如步骤2中图所示），为方法中的代码运行**IntelliTest**单元测试项目。
+
+   　　**IntelliTest** 使用不同的输入多次运行你的代码。 每次运行都会在表中表示出来，显示输入测试数据以及产生的输出或异常。
+
+   ![image-20230907205433908](utiltest-images/image-20230907205433908.png)
+
+5. 要为一个类中的所有公共方法生成单元测试，只需右键单击类而不是特定的方法。 然后选择“运行 IntelliTest”。 使用“浏览结果”窗口中的下拉列表，显示类中每个方法的单元测试和输入数据。
+
+   ![image-20230907205536991](utiltest-images/image-20230907205536991.png)
+
+6. 对于通过的测试，检查结果列中报告的结果是否与你对代码的预期要求匹配。 对于失败的测试，根据需要修复你的代码。 然后重新运行 IntelliTest 来验证修复。
+
 
 
 ## MSTest
 
-### Assert [断言]
+### Assert 【断言】
 
 > [Assert 类 (Microsoft.VisualStudio.TestTools.UnitTesting) | Microsoft Learn](https://learn.microsoft.com/zh-cn/previous-versions/ms245302(v=vs.110)?redirectedfrom=MSDN)
 
 静态类，使用 true/false 命题验证单元测试中的条件。
 
-**方法；**
+| 参数名                | 说明                                          |
+| --------------------- | --------------------------------------------- |
+| expected              | 预期值                                        |
+| actual                | 实际值                                        |
+| message               | 断言失败显示的消息                            |
+| `Object[] parameters` | 为message参数中的字符串格式化占位符填充数据值 |
 
-| 参数名   | 说明   |
-| -------- | ------ |
-| expected | 预期值 |
-| actual   | 实际值 |
-|          |        |
+方法前面标“⭐”的表示该方法有以下参数的重载
 
+- `string message` 
 
+- `string message,params Object[] parameters` 
 
-- `public static void AreEqual( Object expected, Object actual )` 验证指定的两个对象是否相等。 如果两个对象不相等，则断言失败。 
-- `public static void AreEqual( double expected, double actual, double delta )` 
+**AreEqual()方法；**
+
+主要用于判断两个对象是否相等
+
+- ⭐`public static void AreEqual( Object expected, Object actual )` 验证指定的两个对象是否相等。 如果两个对象不相等，则断言失败。 
+
+- `AreEqual(Object, Object, String)` 验证指定的两个对象是否相等。 如果两个对象不相等，则断言失败。 如果断言失败，将显示一则消息
+
+- `public static void AreEqual(Object expected,Object actual,string message,params Object[] parameters)` 验证指定的两个对象是否相等。 如果两个对象不相等，则断言失败。 断言失败时将显示一则消息，并向该消息应用指定的格式。
+
   - 参数
-    - double delta  
+
+    - Object[] parameters 设置 message 格式时使用的参数的数组。 
+
+      ```c#
+       Assert.AreEqual(1, 2, "不相等{0}", new string[]{"2333"});
+      ```
+
+      
+
+- ⭐`public static void AreEqual( double expected, double actual, double delta )`  验证指定的两个双精度型值是否相等或者是否在对方的指定精度内。 如果它们不位于对方的指定精度内，则断言失败。
+  
+  - 参数
+    - double delta   只有当 expected 与 actual 的**差超过** delta 时断言才失败。 
+  
+  
+  
+- ⭐`AreEqual(Single, Single, Single)` 验证指定的两个单精度型值是否相等或者是否位于对方的指定精度内。 如果它们不位于对方的指定精度内，则断言失败。 
+
+  
+
+- ⭐`public static void AreEqual( string expected, string actual, bool ignoreCase )` 验证指定的两个字符串是否相等，根据指定的要求忽略大小写或不忽略大小写。 如果它们不相等，则断言失败。
+  - 参数；
+    - bool ignoreCase  指示区分大小写或不区分大小写的比较。 true 指示所进行的比较不区分大小写。 
+
+- ⭐`AreEqual<T>(T, T)` 使用相等运算符验证指定的两个泛型数据是否相等。 如果它们不相等，则断言失败。 
+  - 参数
+    - `<T>` 要验证数据的泛型类型是什么
+  - 注意；如果逻辑值相等，不同的数值类型也会**被视为相等**。 例如，42L 不等于 42。
+
+**AreNotEqual()方法；**
+
+验证指定的两个对象是否不相等
+
+- ⭐`AreNotEqual(Object, Object)` 验证指定的两个对象是否不相等。 如果两个对象相等，则断言失败。 
+
+**AreNotSame()方法；**
+
+验证指定的两个对象变量是否引用不同的对象
+
+- ⭐`AreNotSame(Object, Object)` 验证指定的两个对象变量是否引用不同的对象。 如果它们引用同一个对象，则断言失败。 
+
+**其它方法；**
+
+- ⭐`Fail()` 在不检查任何条件的情况下使断言失败。 
+
+- ⭐`Inconclusive()` 指示无法验证断言。 
+
+- ⭐`IsTrue(Boolean)` 验证指定的条件是否为 true。 如果该条件为 false，则断言失败。 
+
+- ⭐`IsFalse(Boolean)` 验证指定的条件是否为 false。 如果该条件为 true，则断言失败。 
+
+- ⭐ `IsInstanceOfType(Object, Type)` 验证指定的对象是否为指定类型的实例。 如果在该对象的继承层次结构中找不到该类型，则断言失败。 
+
+  ```c#
+  Assert.IsInstanceOfType("s",typeof(string));
+  ```
+
+- ⭐`IsNotInstanceOfType(Object, Type)` 验证指定的对象是否不为指定类型的实例。 如果在该对象的继承层次结构中找到了指定的类型，则断言失败。 
+
+- ⭐`IsNull(Object)` 验证指定的对象是否**为 null**。如果该对象不为 null，则断言失败。 
+
+- ⭐`IsNotNull(Object)` 验证指定的对象是否**不为 null**。如果该对象为 null，则断言失败。 
+
+- `ReplaceNullChars` 在字符串中，用 "\\0" 替换空字符 ('\0')。 
+
+**总结；**
+
+ Assert  类提供了许多用于验证真假设的静态方法。 如果所验证的条件不为  true，则断言将失败。
+
+> 重要；
+>
+> Assert 类通过引发 `AssertFailedException` 来表示失败。 **不应捕获该异常**。 单元测试引擎处理此异常来指示断言失败。
+
+### StringAssert 【字符串断言】
+
+静态类
+
+- ⭐Contains(String, String) 验证第一个字符串是否包含第二个字符串。 此方法**区分大小写**。 
+- ⭐DoesNotMatch(String, Regex) 验证指定的字符串是否与正则表达式**不匹配**。 
+- ⭐EndsWith(String, String) 验证第一个字符串是否以第二个字符串结尾。 此方法**区分大小写**。
+- ⭐Matches(String, Regex) 验证指定的字符串是否与正则表达式匹配。 
+- ⭐StartsWith(String, String) 验证第一个字符串是否以第二个字符串开头。 此方法**区分大小写**。 
+
+### TestContext
+
+> [TestContext 类 (Microsoft.VisualStudio.TestTools.UnitTesting) | Microsoft Learn](https://learn.microsoft.com/zh-cn/previous-versions/ms245541(v=vs.110)?redirectedfrom=MSDN)
+
+用于存储提供给单元测试的信息。
 
 
 
+### CollectionAssert【集合断言】
+
+> [CollectionAssert 类 (Microsoft.VisualStudio.TestTools.UnitTesting) | Microsoft Learn](https://learn.microsoft.com/zh-cn/previous-versions/ms245294(v=vs.110)?redirectedfrom=MSDN)
+
+在单元测试中验证与集合关联的 true/false 命题。
+
+### DataSourceElement 
+
+> [DataSourceElement 类 (Microsoft.VisualStudio.TestTools.UnitTesting) | Microsoft Learn](https://learn.microsoft.com/zh-cn/previous-versions/ms245512(v=vs.110)?redirectedfrom=MSDN)
+
+将数据源元素表示为配置文件中的 XML 标记。
+
+### DataSourceElementCollection 
+
+> [DataSourceElementCollection 类 (Microsoft.VisualStudio.TestTools.UnitTesting) | Microsoft Learn](https://learn.microsoft.com/zh-cn/previous-versions/ms245536(v=vs.110)?redirectedfrom=MSDN)
+
+表示 XML 元素，此元素包含子 DataSourceElement 对象的集合。
 
 
 
@@ -411,13 +556,333 @@ public void GetTriangle_Test()
 
 请注意，Intelli Test 仅在 VisualStudio Enterprise 版中可用。其他版本的 Visual Studio 只有“创建单元测试”菜单选项。
 
+## MSTest特性
+
+### DeploymentItem【部署项】
+
+指定应具有在运行测试之前的程序集一起部署的文件或目录。 附加此属性设置为测试选件类或测试方法。 可以使用多个实例。 
+
+**构造；**
+
+- `public DeploymentItemAttribute(string path)` 
+  - 参数；
+    - string path 部署的文件或目录。 路径是**相对于生成输出目录**。 项目将被复制到与部署测试程序集的目录。 
+
+- `public DeploymentItemAttribute(string path,string outputDirectory)` 在测试运行开始之前，指定项目将部署。
+  - 参数；
+    - string path 部署的文件或目录的相对路径或绝对路径。 路径是相对于生成输出目录。 项目将被复制到与部署测试程序集的目录。 
+    - string outputDirectory  项目将复制目录的路径。 它可以是或绝对或相对部署目录中。 path 和内容确定的所有文件都复制到该目录。 
+
+>  若要避免在项目结构的依赖关系，请从生成输出目录设置项目文件 复制到输出 属性，并部署。
+
+**使用方法；**
+
+- `[DeploymentItem("file1.xml")]`  复制 file1.xml 从生成输出目录添加到部署目录。
+
+- `[DeploymentItem(@"Testfiles\")]  `复制所有文件和文件夹。Testfiles 文件夹从生成输出文件夹添加到部署文件夹。 子文件夹在部署文件夹复制。
+
+- `[DeploymentItem("file2.xml", "DataFiles")]`  创建在部署文件夹名为的 DataFiles 一个文件夹，并复制从生成输出文件夹中的 file2.xml 到数据存档。
+
+  > 说明；
+  >
+  > 如果使用第二个参数，它必须始终是文件夹，从文件的路径。 如果该文件夹不存在，则将创建。 使用 DeploymentItem，不能更改文件的名称。
+
+- `[DeploymentItem(@"Resources\file2.xml",  "DataFiles")]`  如果不存在，创建在部署文件夹名为的 DataFiles 一个文件夹。 复制资源文件夹的 file2.xml 在生成输出文件夹下到数据存档。 通知资源文件夹在目标文件夹中没有重复项。
+
+- `[DeploymentItem(@"TestFiles\", "TestFiles")]`  TestFiles 内容复制到部署文件夹的子文件夹。 子文件夹复制到该目标下。
+
+- `[DeploymentItem(@"..\..\file1.xml")] (不建议)`  将一个项从项目目录。 此示例假定输出目录，例如，在 bin\debug 的典型的项目结构。而不是这取决于项目结构，设置文件的 复制到输出 属性。 部署文件从生成输出目录。
+
+- `[DeploymentItem(@"C:\MyDataFiles\")]`  复制 MyDataFiles 文件夹的内容添加到部署文件夹。
+
+  - (如果使用的 .testsettings  文件) [DeploymentItem("%myDir%\myFile.txt")] 
+
+    部署文件 myFile.txt，如果该文件存在于 %myDir% 解决的内容。
+
+### TestProperty【测试属性】
+
+在方法上建立临时测试用特定属性。
+
+ ```c#
+ using System;
+ using Microsoft.VisualStudio.TestTools.UnitTesting;
+ using System.Windows.Forms;
+ using System.Reflection;
+ 
+ namespace TestProperty
+ {
+    [TestClass]
+    public class TestPropertyTest
+    {
+       [TestMethod()]
+       [TestProperty("MyProperty1", "Big")]
+       [TestProperty("MyProperty2", "Small")]
+       public void MyTestMethod()
+       {
+          // Get the current type
+          Type t = GetType();
+ 
+          MethodInfo mi = t.GetMethod("MyTestMethod");
+          Type MyType = typeof(TestPropertyAttribute);
+          object[] attributes = mi.GetCustomAttributes(MyType, false);
+ 
+          for (int i = 0; i < attributes.Length; i++)
+          {
+             string name = ((TestPropertyAttribute)attributes[i]).Name;
+             string val = ((TestPropertyAttribute)attributes[i]).Value;
+ 
+             string mystring = string.Format("Property Name: {0}, Value: {1}", name, val);
+             MessageBox.Show(mystring);
+          }
+       }
+    }
+ }
+ ```
 
 
 
+### Description【测试说明】
+
+用于指定对测试的说明。 此类不能被继承。
+
+```
+[Description("这是一个示例测试方法")]
+```
+
+###  Owner【测试人员信息】
+
+用于指定负责对测试进行维护、运行和/或调试的人员 
+
+### TestCategory【测试类别名】
+
+用于指定单元测试类别的类。
+
+### Priority【测试优先级】
+
+用于指定单元测试的优先级 
+
+数值越大优先级越高
+
+### Shadowing【禁用此类】
+
+不要使用此类。
+
+### ExpectedException 【预期异常】
+
+表示测试方法的执行过程中应引发异常。 
+
+构造；
+
+- `public ExpectedExceptionAttribute(Type exceptionType)` 用预期的异常初始化 
+
+  - 参数；
+
+    - Type exceptionType 预期的异常类型，此异常将由方法引发。
+
+      如果 exceptionType 为  null  , 诊断消息将被发送到跟踪侦听器。 
+
+-  `public ExpectedExceptionAttribute(Type exceptionType,string noExceptionMessage)` 用预期的异常类型以及描述此异常的消息来初始化 
+  -  参数；
+    - string noExceptionMessage 如果测试没有引发异常而失败，则要包含在测试结果中的消息。
+
+### Ignore 【忽略测试】
+
+指示特定测试不应运行。 此类不能被继承。
+
+> 这应该用于在运行一组测试时暂时排除其中的特定测试。 如果由于代码中存在错误，某个测试使其他测试无法运行，则可以使用它来阻止该测试的运行。 因为测试仍在编译，所以与注释掉代码相比，这种方法更好。
+>
+> 它将测试的“已启用测试”属性设置为 false。
+>
+> 可以在测试类或方法上指定此属性。 一个方法或类上只能有此属性的一个实例。
+
+### DataSource【数据源】
+
+为数据驱动测试提供数据源特定的信息。 此类不能被继承。 
+
+**构造；**
+
+- ` public DataSourceAttribute(string dataSourceSettingName)` 使用与设置名称关联的数据提供程序和连接字符串进行初始化。
+
+  - 参数
+    - string dataSourceSettingName 在 app.config 文件的 `microsoft.visualstudio.qualitytools` 部分中找到的数据源的名称。
+
+-  `public DataSourceAttribute(string connectionString, string tableName)` 将使用连接字符串和表名称进行初始化。 指定连接字符串和数据表以访问 OLEDB 数据源。
+
+  - 参数；
+    - string connectionString  特定于数据提供程序的连接字符串。 警告：连接字符串可以包含敏感数据（例如密码）。 连接字符串以纯文本形式存储在源代码和已编译的程序集中。 限制对源代码和程序集的访问以保护此敏感信息。
+    - string tableName 数据表的名称。
+
+- `public DataSourceAttribute(string providerInvariantName, string connectionString, string tableName, DataAccessMethod dataAccessMethod)`  使用数据提供程序、连接字符串、数据表和数据访问方法进行初始化，以访问数据源。及使用数据库
+
+  - 参数；
+
+    - string providerInvariantName 固定数据提供程序名称，例如 System.Data.SqlClientstring connectionString 
+
+    - string connectionString 特定于数据提供程序的连接字符串。 警告：连接字符串可以包含敏感数据（例如密码）。 连接字符串以纯文本形式存储在源代码和已编译的程序集中。 限制对源代码和程序集的访问以保护此敏感信息。如文件路径、连接字符串等。
+
+    - string tableName 数据表的名称。
+
+    - DataAccessMethod dataAccessMethod 指定访问数据的顺序。
+
+      DataAccessMethod 枚举
+
+      | 值         | 作用               |
+      | ---------- | ------------------ |
+      | Random     | 按随机顺序返回行。 |
+      | Sequential | 按顺序返回行。     |
+
+### AssemblyInitialize【程序集初始化】
+
+被标记的方法会在运行程序集中的**所有测试之前**使，并分配程序集获得的资源。
+
+- 被标记的方法必须是`public static void`修饰的。
+- 方法必须有`TestContext testContext` 形参
+
+- 将在用 ClassInitializeAttribute、 TestInitializeAttribute 和 TestMethodAttribute 属性标记的方法之前运行用该属性标记的方法。 **一个程序集中只有一个方法可用该属性修饰。**
+- 此属性不应当用于 ASP.NET 单元测试，即任何带有 [HostType("ASP.NET")] 属性的测试。 由于  IIS 和 ASP.NET 的无状态特性，用此属性修饰的方法在每个测试运行中可以多次调用。
+- 对于带有 AssemblyInitialize 属性标记的方法，仅当该方法属于带有 TestClass  属性标记的类的成员时，测试引擎才会运行它。
+- 每个方法只能应用此特性的一个实例
+
+### ClassInitialize【类初始化】
+
+标识一个包含代码的方法，这些代码必须在测试类中的**任意测试运行之前**使用，并用于分配测试类所使用的资源。 
+
+- 被标记的方法必须是`public static void`修饰的。
+
+- 方法必须有`TestContext testContext` 形参
+- 在负载测试中运行时，标有此属性的方法将**运行一次**，并且它所执行的任何初始化操作都将应用于**整个测试**。  
+- 每个方法只能应用此特性的一个实例
+
+### TestInitialize【测试初始化】
+
+标识在**测试之前**要运行的方法，从而分配并配置测试类中的所有测试所需的资源。 
+
+- 在负载测试中运行时，标有此属性的方法将针对测试中的所有虚拟用户迭代**运行一次**。
+- 每个方法只能应用此特性的一个实例
+
+###  TestMethod
+
+用于标识测试方法。 
+
+- 测试方法必须位于测试类中并且必须用 TestMethodAttribute 标记才是有效的。
+- 可以在方法上指定此属性。 每个方法只能应用此特性的一个实例。
+- 默认情况下，此属性用于区分自动生成的代码中的测试方法。
+
+### TestClass【标识测试类】
+
+用于标识包含测试方法的类。 此类不能被继承。
+
+### TestClassExtension【测试扩展类】
+
+激活类，以将其识别为单元测试扩展类 
+
+### TestCleanup【测试清理】
+
+标识一个方法，此方法包含测试运行后必须用于释放测试类中的全部测试所获得的资源的代码。
+
+- 将在用 TestMethodAttribute 标记的方法**之后**、用 ClassCleanupAttribute 和 AssemblyCleanupAttribute 标记的方法**之前**运行用此属性标记的方法。
+- 可以在方法上指定此属性。 每个方法只能应用此特性的一个实例。
+- 默认情况下，此特性用于生成的代码中。
+
+### ClassCleanup【类清理】
+
+标识一个包含代码的方法，该代码将在测试类中所有的测试都运行以后使用，并释放测试类所获取的资源。 此类不能被继承。
+
+- 将在用 TestCleanupAttribute 标记的方法**之后**、用 AssemblyCleanupAttribute 标记的方法**之前**运行用此属性标记的方法。 
+- 一个类中只有一个方法可以用此属性修饰。
+- 此属性不应当用于 ASP.NET 单元测试，即任何带有 [HostType("ASP.NET")] 属性的测试。 由于  IIS 和 ASP.NET 的无状态特性，用此属性修饰的方法在每个测试运行中可以多次调用。
+
+### AssemblyCleanup 【程序集清理】
+
+被标记的方法会在程序集中的所有测试之后使用并释放程序集获得的资源。
+
+- 被标记的方法必须是`public static`修饰的并且无返回值。如果不是会导致其它测试方法不执行。
+
+- 将在用 TestCleanupAttribute 和 ClassCleanupAttribute 属性标记的方法**之后**运行用该属性标记的方法。
+-  如果**引发未经处理的异常，则不执行该方法**。 
+- 如果具有 AssemblyCleanupAttribute 特性的方法与测试方法所在的类不同，将执行该方法。 **一个程序集中只有一个方法可用该属性修饰。**
+- 每个方法只能应用此特性的一个实例
+
+> 此属性不应当用于 ASP.NET 单元测试，即任何带有 [HostType("ASP.NET")] 属性的测试。 由于  IIS 和 ASP.NET 的无状态特性，用此属性修饰的方法在每个测试运行中可以多次调用。
+
+```c#
+  [AssemblyCleanup()]
+  public static void AssemblyCleanupAttributeTest()
+  {
+      MessageBox.Show("AssemblyCleanup");
+
+  }
+```
 
 
 
+## 特性执行顺序
 
+1. AssemblyInitialize
+2. ClassInitialize
+3. TestInitialize
+4. TestMethod
+5. TestCleanup
+6. ClassCleanup
+7. AssemblyCleanup
+
+```c#
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+
+namespace UnitTestDemoTests
+{
+    [TestClass]
+    public class DivideClassTest
+    {
+        [AssemblyInitialize]
+        public static void AssemblyInit(TestContext testContext)
+        {
+            Console.WriteLine("AssemblyInitialize" + testContext);
+        }
+
+        [ClassInitialize]
+        public static void ClassInit(TestContext testContext)
+        {
+            Console.WriteLine("ClassInitialize" + testContext);
+        }
+
+        [TestInitialize()]
+        public void Initialize()
+        {
+            Console.WriteLine("TestInitialize");
+        }
+
+        [TestCleanup()]
+        public void Cleanup()
+        {
+            Console.WriteLine("TestCleanup");
+        }
+
+        [ClassCleanup()]
+        public static void ClassCleanup()
+        {
+            Console.WriteLine("ClassCleanup");
+        }
+
+        [AssemblyCleanup()]
+        public static void AssemblyCleanup()
+        {
+            Console.WriteLine("AssemblyCleanup");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(System.DivideByZeroException))]
+        public void Test11() {
+
+            Console.WriteLine("TestMethod");
+            Assert.Fail();
+        }
+    }
+
+}
+
+```
 
 
 
