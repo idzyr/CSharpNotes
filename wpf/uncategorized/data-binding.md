@@ -17,9 +17,9 @@
 
 如何在GUI编程时把数据的地位由被动变主动、让数据回归程序的核⼼呢？这就要用到DataBinding。
 
-## 介绍DataBinding
+## Data Binding在WPF中的地位
 
-**三层结构的程序；**
+### 三层结构的程序
 
 数据存储层、数据处理层和数据展⽰层。
 
@@ -31,7 +31,7 @@
 
   （界⾯和接⼝两个词在英⽂中均为interface，所以本质上没有什么区别）
 
-**算法在程序中的分布；**
+#### 算法在程序中的分布
 
 程序的本质是数据加算法。数据会在存储、逻辑和展⽰三个层流通，所以站在数据的⾓度上来看，这三层都很重要。但算法在程序中的分布就不均匀了，对于⼀个三层结构的程序来说，算法⼀般分布在这⼏处：
   A．数据库内部。
@@ -47,7 +47,7 @@
 - 最后，D和E本应是互逆的⼀对⼉，但却需要分开来写——显⽰数据写⼀个算法、修改数据⼜是⼀个算法。总之导致的结果就是D和E两个部分会占去⼀部分算法，搞不好还会牵扯不少精⼒。
 - 问题的根源就在于逻辑层与展⽰层的地位不固定——当实现客户需求的时候，逻辑层的确处在中⼼地位，但到了实现UI交互的时候展⽰层⼜处于中⼼地位。WPF作为⼀种专门的展⽰层技术，华丽的外观和动画只是它的表层现象，更重要的是它在深层次上帮助程序员把思维的重⼼固定在了逻辑层、让展⽰层永远处于逻辑层的从属地位。WPF具有这种能⼒的关键是它引⼊了Data Binding概念以及与之配套的Dependency Property（依赖属性）系统和DataTemplate。
 
-**Windows Form迁移到WPF**
+#### Windows Form迁移到WPF
 
 Windows Form迁移到WPF之后，对于这个三层程序⽽⾔。
 
@@ -64,7 +64,7 @@ Data Binding在WPF系统中起到的是数据⾼速公路的作⽤。有了这�
 
 引⼊Data Binding机制后，D、E两个部分会简化很多。⾸先，数据在逻辑层与⽤户界⾯之间“直来直去”、不涉及逻辑问题，这样⽤户界⾯部分⼏乎不包含算法
 
-好处；
+**好处；**
 
 - 第⼀，如果把UI层看作是应⽤程序的“⽪”、把存储层和逻辑层看作是程序的“瓤”，那么我们可以很轻易地把⽪从瓤上撕下来并换⼀个新的；
 - 第⼆，因为数据层能够独⽴运转、⾃成体系，所以我们可以进⾏更完善的单元测试⽽⽆需借助UI⾃动化测试⼯具——你完全可以把单元测试代码想象成⼀个“看不⻅的UI”，单元测试只是使⽤这个“UI”绕过真实的UI直接测
@@ -105,23 +105,23 @@ BindingBase类关系
      Binding是⼀种**⾃动机制**，当值变化后属性要有能⼒通知Binding，让Binding把变化传递给UI元素。怎样才能让⼀个属性具备这种通知Binding值已经变化的能⼒呢？⽅法是**在属性的set语句中激发⼀个PropertyChanged事件**。这个事件不需要我们⾃⼰声明，我们要做的是让作为数据源的类实现`System.ComponentModel`名称空间中的`INotifyPropertyChanged`接⼝。当为Binding**设置了数据源后，Binding就会⾃动侦听来⾃这个接⼝的PropertyChanged事件**。
   
   ```c#
-   class Student:INotifyPropertyChanged
+  class Student:INotifyPropertyChanged
+  {
+      private string name;
+  
+      public event PropertyChangedEventHandler? PropertyChanged;
+  
+      public string Name
       {
-          private string name;
-  
-          public event PropertyChangedEventHandler? PropertyChanged;
-  
-          public string Name
-          {
-              get { return name; }
-              set {
-                  name = value;
-                  // 通知Binding属性值已经改变
-                  this.PropertyChanged?.Invoke(this,new PropertyChangedEventArgs("Name"));
-              }
+          get { return name; }
+          set {
+              name = value;
+              // 通知Binding属性值已经改变
+              this.PropertyChanged?.Invoke(this,new PropertyChangedEventArgs("Name"));
           }
-          
       }
+  
+  }
   ```
   
 - 在窗体上准备⼀个TextBox和⼀个Button。TextBox将作 为 Binding ⽬标 ，我们还会在Button的Click事件发⽣ 时改变Student对象的Name属性值。
@@ -155,41 +155,41 @@ BindingBase类关系
   
   ```c#
   public partial class MainWindow : Window
+  {
+      Student student;
+  
+      public MainWindow()
       {
-          Student student;
+          InitializeComponent();
   
-          public MainWindow()
-          {
-              InitializeComponent();
+          // 准备数据源
+          student = new Student();
   
-              // 准备数据源
-              student = new Student();
-              
-              // 配置binding
-              Binding binding = new Binding(); 
-              // 设置数据源
-              binding.Source = student;
-              // 设置访问属性路径
-              binding.Path = new PropertyPath("Name");
-              // 连接数据源和目标
-              /**
+          // 配置binding
+          Binding binding = new Binding(); 
+          // 设置数据源
+          binding.Source = student;
+          // 设置访问属性路径
+          binding.Path = new PropertyPath("Name");
+          // 连接数据源和目标
+          /**
                * SetBinding()
                * 参数；
                *  target 绑定的绑定目标。
                *  dp 绑定的目标依赖项属性只读属性。
                *  binding 描述绑定的 BindingBase 对象。 
                */
-              BindingOperations.SetBinding(TextBox,TextBox.TextProperty,binding);
+          BindingOperations.SetBinding(TextBox,TextBox.TextProperty,binding);
   
-          }
-  
-          private void Button_Click(object sender, RoutedEventArgs e)
-          {
-              // 改变student的Name属性值
-              student.Name += "Name";
-  
-          }
       }
+  
+      private void Button_Click(object sender, RoutedEventArgs e)
+      {
+          // 改变student的Name属性值
+          student.Name += "Name";
+  
+      }
+  }
   ```
   
   当你单击Button时，TextBox就会即时显⽰更新后的Name属性值
@@ -230,7 +230,7 @@ BindingBase类关系
 
 
 
-## 原与路径
+## 源与路径
 
 **数据源要求；**
 
@@ -261,7 +261,6 @@ BindingBase类关系
         <Slider x:Name="Slider1" Maximum="100" Minimum="0" Margin="5" Value="0"/>
     </StackPanel>
 </Window>
-
 ```
 
 ![image-20230731141339108](data-binding-images/image-20230731141339108.png)
@@ -274,7 +273,7 @@ BindingBase类关系
 > 因此，要想在XAML中建⽴UI元素与逻辑层对象的Binding还要颇费些周折，把逻辑层对象声明为XAML代码中的资源（Resource），
 
 ```xaml
-  <TextBox x:Name="TextBox1" Text="{Binding Path=Value,ElementName=Slider1}" />
+<TextBox x:Name="TextBox1" Text="{Binding Path=Value,ElementName=Slider1}" />
 ```
 
 等价C#
@@ -289,7 +288,7 @@ this.TextBox1.SetBinding(TextBox.TextProperty,new Binding("Value") { ElementName
 <TextBox x:Name="TextBox1" Text="{Binding Value,ElementName=Slider1}" />
 ```
 
-> **注意**
+> [!Note]
 > 因为在C#代码中我们可以直接访问控件对象，所以⼀般也不会使⽤Binding的
 > ElementName属性，⽽是直接把对象赋值给Binding的Source属性。
 
@@ -334,7 +333,7 @@ Binding控制数据流方向是BindingMode枚举类型
 对于TextBox默认值Default的⾏为与LostFocus⼀致，我们只需要把这个属性改为PropertyChanged，则Slider的⼿柄就会随着我们在TextBox⾥的输⼊⽽改变位置。
 
 ```xaml
- <TextBox x:Name="TextBox1" Text="{Binding Value,ElementName=Slider1,UpdateSourceTrigger=PropertyChanged}" />
+<TextBox x:Name="TextBox1" Text="{Binding Value,ElementName=Slider1,UpdateSourceTrigger=PropertyChanged}" />
 ```
 
 
@@ -359,7 +358,7 @@ Binding控制数据流方向是BindingMode枚举类型
 直接把Binding关联在Binding源的属性上，前⾯的例⼦就是这样。语法如下：
 
 ````xaml
- <TextBox x:Name="TextBox1" Text="{Binding Path=Value,ElementName=Slider1/>
+<TextBox x:Name="TextBox1" Text="{Binding Path=Value,ElementName=Slider1/>
 ````
 
 等价C#
@@ -383,13 +382,13 @@ Binding还⽀持**多级路径**（通俗地讲就是⼀路“点”下去）。
 ⽐如，如果我们想让⼀个TextBox显⽰另外⼀个TextBox的⽂本⻓度，我们可这样写
 
 ````xaml
-    <StackPanel>
-        <TextBox x:Name="TextBox1"/>
-        <TextBox x:Name="TextBox2" Text="{Binding Text.Length,ElementName=TextBox1,Mode=OneWay}"/>
-    </StackPanel>
+<StackPanel>
+    <TextBox x:Name="TextBox1"/>
+    <TextBox x:Name="TextBox2" Text="{Binding Text.Length,ElementName=TextBox1,Mode=OneWay}"/>
+</StackPanel>
 ````
 
-> 提示；
+> [!Tip]
 >
 > `Text.Length`不要忘记属性中间的点
 
@@ -449,54 +448,54 @@ this.TxtBox3.SetBinding(TextBox.TextProperty, new Binding("/[1]") {Source = stri
 数据类
 
 ```c#
-  /// <summary>
-    /// 省
-    /// </summary>
+/// <summary>
+/// 省
+/// </summary>
 
-    class Province
+class Province
+{
+    public string Name
     {
-        public string Name
-        {
-            get;
-            set;
-        }
-        public List<City> CityList
-        {
-            get;
-            set;
-        }
+        get;
+        set;
+    }
+    public List<City> CityList
+    {
+        get;
+        set;
+    }
+}
+
+/// <summary>
+/// 城市
+/// </summary>
+class City
+{
+    public string Name
+    {
+        get;
+        set;
+    }
+    public List<Country> CountryList
+    {
+        get;
+        set;
     }
 
-    /// <summary>
-    /// 城市
-    /// </summary>
-    class City
-    {
-        public string Name
-        {
-            get;
-            set;
-        }
-        public List<Country> CountryList
-        {
-            get;
-            set;
-        }
+}
 
-    }
-  
-    /// <summary>
-    /// 区/县
-    /// </summary>
+/// <summary>
+/// 区/县
+/// </summary>
 
-    internal class Country
+internal class Country
+{
+    public string Name
     {
-        public string Name
-        {
-            get;
-            set;
-        }
+        get;
+        set;
     }
+}
 ```
 
 绑定
@@ -539,15 +538,15 @@ this.TxtBox6.SetBinding(TextBox.TextProperty,new Binding("/CityList/CountryList/
 
 ```xaml
 <StackPanel>
-        <StackPanel.Resources>
-            <sys:String x:Key="myString">
-                菩提本无树，明镜亦非台。
-                本来无一物，何处惹尘埃。
-            </sys:String>
-        </StackPanel.Resources>
-    
+    <StackPanel.Resources>
+        <sys:String x:Key="myString">
+            菩提本无树，明镜亦非台。
+            本来无一物，何处惹尘埃。
+        </sys:String>
+    </StackPanel.Resources>
+
     <TextBlock Text="{Binding Path=.,Source={StaticResource ResourceKey=myString}}"/>
-    
+
 </StackPanel>
 ```
 
@@ -605,12 +604,12 @@ DataContext属性被**定义在FrameworkElement类⾥，这个类是WPF控件的
 - 创建⼀个名为Student的类，它具有Id、Name、Age三个属性：
 
   ```c#
-   class Student1
-      {
-          public int Id { get; set; }
-          public string Name { get; set; }
-          public int Age { get; set; }
-      }
+  class Student1
+  {
+      public int Id { get; set; }
+      public string Name { get; set; }
+      public int Age { get; set; }
+  }
   ```
 
 - 在XAML创建程序的UI。
@@ -637,7 +636,6 @@ DataContext属性被**定义在FrameworkElement类⾥，这个类是WPF控件的
           </Grid>
       </StackPanel>
   </Window>
-  
   ````
 
 ​		UI布局如图
@@ -647,9 +645,9 @@ DataContext属性被**定义在FrameworkElement类⾥，这个类是WPF控件的
 
 
 ````xaml
-  <StackPanel.DataContext>
-            <local:Student1 Id="2" Age="20" Name="Tim"/>
-        </StackPanel.DataContext>
+<StackPanel.DataContext>
+    <local:Student1 Id="2" Age="20" Name="Tim"/>
+</StackPanel.DataContext>
 ````
 
 就为外层StackPanel的DataContext进⾏了赋值——它是⼀个Studen1t对象。三个TextBox的Text通过Binding获取值，但只为Binding指定了Path、没有指定Source。简写成这样也可以
@@ -691,7 +689,6 @@ DataContext属性被**定义在FrameworkElement类⾥，这个类是WPF控件的
         </Grid>
     </StackPanel>
 </Window>
-
 ````
 
 
@@ -708,13 +705,13 @@ DataContext属性被**定义在FrameworkElement类⾥，这个类是WPF控件的
 因为内层的Grid和Button都没有设置DataContext属性值所以最外层Grid的DataContext属性值会⼀直传递到Button那⾥，单击Button就会显⽰这个值
 
 ```xaml
- <Grid DataContext="6">
-            <Grid>
-                <Grid>
-                    <Button x:Name="Btn" Click="Button_Click">ok</Button>
-                </Grid>
-            </Grid>
+<Grid DataContext="6">
+    <Grid>
+        <Grid>
+            <Button x:Name="Btn" Click="Button_Click">ok</Button>
         </Grid>
+    </Grid>
+</Grid>
 ```
 
 处理Buttom的Click事件
@@ -722,7 +719,7 @@ DataContext属性被**定义在FrameworkElement类⾥，这个类是WPF控件的
 ```c#
 private void Button_Click(object sender, RoutedEventArgs e)
 {
-	MessageBox.Show(Btn.DataContext.ToString());
+    MessageBox.Show(Btn.DataContext.ToString());
 }
 ```
 
@@ -772,34 +769,34 @@ ItemsSource⾥存放的是⼀条⼀条的数据，要想把数据显⽰出来需
 我们要实现的效果是把⼀个`List<Student>`集合的实例作为ListBox的ItemsSource，让ListBox显⽰Student的Name并使⽤TextBox显⽰ListBox当前选中条⽬的Id。
 
 ```c#
-   public partial class ItemsSourceWindow : Window
+public partial class ItemsSourceWindow : Window
+{
+    public ItemsSourceWindow()
     {
-        public ItemsSourceWindow()
+        InitializeComponent();
+
+        // 准备数据
+        List<Student1> studentList = new List<Student1>
         {
-            InitializeComponent();
-            
-            // 准备数据
-            List<Student1> studentList = new List<Student1>
-            {
-                new Student1(){Id = 0,Name = "令狐楚",Age = 20},
-                new Student1(){Id = 1,Name = "孟莹莹",Age = 22},
-                new Student1(){Id = 2,Name = "郭靖",Age = 18},
-                new Student1(){Id = 3,Name = "黄蓉",Age = 17},
-                new Student1(){Id = 4,Name = "杨过",Age = 22},
-                new Student1(){Id = 5,Name = "小龙女",Age = 18},
-            };
+            new Student1(){Id = 0,Name = "令狐楚",Age = 20},
+            new Student1(){Id = 1,Name = "孟莹莹",Age = 22},
+            new Student1(){Id = 2,Name = "郭靖",Age = 18},
+            new Student1(){Id = 3,Name = "黄蓉",Age = 17},
+            new Student1(){Id = 4,Name = "杨过",Age = 22},
+            new Student1(){Id = 5,Name = "小龙女",Age = 18},
+        };
 
-            // 为ListBox设置数据源
-            this.TxtListBox.ItemsSource = studentList;
-            // 要显示的数据成语路径
-            this.TxtListBox.DisplayMemberPath = "Name";
+        // 为ListBox设置数据源
+        this.TxtListBox.ItemsSource = studentList;
+        // 要显示的数据成语路径
+        this.TxtListBox.DisplayMemberPath = "Name";
 
-            // 让TxtBoxId 显示ListBox当前选项的Id属性
-            Binding binding = new Binding("SelectedItem.Id") {Source = this.TxtListBox};
-            this.TxtBoxId.SetBinding(TextBox.TextProperty, binding);
+        // 让TxtBoxId 显示ListBox当前选项的Id属性
+        Binding binding = new Binding("SelectedItem.Id") {Source = this.TxtListBox};
+        this.TxtBoxId.SetBinding(TextBox.TextProperty, binding);
 
-        }
     }
+}
 ```
 
 ![image-20230809210302588](data-binding-images/image-20230809210302588.png)
@@ -858,7 +855,6 @@ text.SetBinding(TextBlock.TextProperty, binding);
         </ListBox>
     </StackPanel>
 </Window>
-
 ```
 
 
@@ -867,7 +863,7 @@ text.SetBinding(TextBlock.TextProperty, binding);
 
 ![image-20230809222905528](data-binding-images/image-20230809222905528.png)
 
-> **注意；**
+> [!Note]
 >
 > 在使⽤集合类型作为列表控件的ItemsSource时⼀般会考虑**使⽤`ObservableCollection<T>`代替`List<T>`**，因为`ObservableCollection<T>`类实现了INotifyCollectionChanged和INotifyPropertyChanged接⼝，能把集合的变化⽴刻通知显⽰它的列表控件，改变会⽴刻显现出来。
 
@@ -881,28 +877,28 @@ text.SetBinding(TextBlock.TextProperty, binding);
 - 假设有一些数据
 
   ```c#
-   /// <summary>
-   /// 模拟从数据库获取数据
-   /// </summary>
-   /// <returns></returns>
-   DataTable LoadData()
-   {
+  /// <summary>
+  /// 模拟从数据库获取数据
+  /// </summary>
+  /// <returns></returns>
+  DataTable LoadData()
+  {
   
-       DataTable dataTable = new DataTable();
+      DataTable dataTable = new DataTable();
   
-       // 定义表的列：
-       dataTable.Columns.Add("ID", typeof(int));
-       dataTable.Columns.Add("Name", typeof(string));
-       dataTable.Columns.Add("Age", typeof(int));
-       // 添加行到DataTable中：
-       dataTable.Rows.Add(0, "John", 25);
-       dataTable.Rows.Add(1, "Amy", 30);
-       dataTable.Rows.Add(2, "Tom", 28);
-       dataTable.Rows.Add(2, "Any", 18);
-       dataTable.Rows.Add(2, "Mak", 38);
+      // 定义表的列：
+      dataTable.Columns.Add("ID", typeof(int));
+      dataTable.Columns.Add("Name", typeof(string));
+      dataTable.Columns.Add("Age", typeof(int));
+      // 添加行到DataTable中：
+      dataTable.Rows.Add(0, "John", 25);
+      dataTable.Rows.Add(1, "Amy", 30);
+      dataTable.Rows.Add(2, "Tom", 28);
+      dataTable.Rows.Add(2, "Any", 18);
+      dataTable.Rows.Add(2, "Mak", 38);
   
-       return dataTable;
-   }
+      return dataTable;
+  }
   ```
 
 - 显⽰在⼀个ListBox⾥
@@ -977,7 +973,6 @@ text.SetBinding(TextBlock.TextProperty, binding);
         <Button Content="Load" Click="Button_Click"/>
     </StackPanel>
 </Window>
-
 ```
 
 
@@ -993,8 +988,8 @@ Buttom click事件处理
 ```c#
 private void Button_Click(object sender, RoutedEventArgs e)
 {
-	DataTable dataTable = LoadData();
-	this.ListView.ItemsSource = dataTable.DefaultView;
+    DataTable dataTable = LoadData();
+    this.ListView.ItemsSource = dataTable.DefaultView;
 }
 ```
 
@@ -1007,13 +1002,13 @@ private void Button_Click(object sender, RoutedEventArgs e)
 通过上⾯的例⼦我们已经知道DataTable对象的DefaultView属性可以作为ItemsSource使⽤，但是不能直接使用DataTable会得到⼀个编译错误
 
 ```c#
-  private void Button_Click(object sender, RoutedEventArgs e)
-  {
-      DataTable dataTable = LoadData();
-      
-      this.ListView.ItemsSource = dataTable; 
-      // 错误	CS0266	无法将类型“System.Data.DataTable”隐式转换为“System.Collections.IEnumerable”。存在一个显式转换(是否缺少强制转换?)
-  }
+private void Button_Click(object sender, RoutedEventArgs e)
+{
+    DataTable dataTable = LoadData();
+
+    this.ListView.ItemsSource = dataTable; 
+    // 错误	CS0266	无法将类型“System.Data.DataTable”隐式转换为“System.Collections.IEnumerable”。存在一个显式转换(是否缺少强制转换?)
+}
 ```
 
 
@@ -1021,12 +1016,12 @@ private void Button_Click(object sender, RoutedEventArgs e)
 显然，DataTable**不能直接拿来为ItemsSource赋值**。不过，当你把DataTable对象放在⼀个对象的DataContext属性⾥，并把ItemsSource与⼀个**既没有指定Source⼜没有指定Path的Binding**关联起来时，Binding却能⾃动找到它的DefaultView并当作⾃⼰的Source来使⽤：
 
 ```c#
-  private void Button_Click(object sender, RoutedEventArgs e)
-  {
-      DataTable dataTable = LoadData();
-      this.ListView.DataContext = dataTable;
-      this.ListView.SetBinding(ListView.ItemsSourceProperty,new Binding());
-  }
+private void Button_Click(object sender, RoutedEventArgs e)
+{
+    DataTable dataTable = LoadData();
+    this.ListView.DataContext = dataTable;
+    this.ListView.SetBinding(ListView.ItemsSourceProperty,new Binding());
+}
 ```
 
 所以，在代码中发现把DataTable⽽不是DefaultView作为DataContext的值，并且为ItemsSource设置⼀个既⽆Path⼜⽆Source的Binding时，千万别感觉迷惑。
@@ -1088,27 +1083,26 @@ private void Button_Click(object sender, RoutedEventArgs e)
           <Button Content="Load" Click="Button_Click"/>
       </StackPanel>
   </Window>
-  
   ```
-
+  
 - Button的Click事件处理器
 
   ```c#
-    private void Button_Click(object sender, RoutedEventArgs e)
-    {
-        XmlDocument doc = new XmlDocument();
-        doc.Load(@"E:\CsharpCode\wpf-code\WPF的学习\DataBinding\RawData.xml");
+  private void Button_Click(object sender, RoutedEventArgs e)
+  {
+      XmlDocument doc = new XmlDocument();
+      doc.Load(@"E:\CsharpCode\wpf-code\WPF的学习\DataBinding\RawData.xml");
   
-        // 允许以声明方式访问数据绑定的 XML 数据。
-        XmlDataProvider xDataProvider = new XmlDataProvider();
-        // 获取或设置要用作绑定源的 XmlDocument。
-        xDataProvider.Document = doc;
-        // 获取或设置用于生成数据集合的 XPath表达式查询。这样我们要把Student生成集合
-        xDataProvider.XPath = @"/StudentList/Student";
+      // 允许以声明方式访问数据绑定的 XML 数据。
+      XmlDataProvider xDataProvider = new XmlDataProvider();
+      // 获取或设置要用作绑定源的 XmlDocument。
+      xDataProvider.Document = doc;
+      // 获取或设置用于生成数据集合的 XPath表达式查询。这样我们要把Student生成集合
+      xDataProvider.XPath = @"/StudentList/Student";
   
-        this.ListViewStudents.DataContext = xDataProvider;
-        this.ListViewStudents.SetBinding(ListView.ItemsSourceProperty, new Binding());
-    }
+      this.ListViewStudents.DataContext = xDataProvider;
+      this.ListViewStudents.SetBinding(ListView.ItemsSourceProperty, new Binding());
+  }
   ```
 
   ![image-20230813155339618](data-binding-images/image-20230813155339618.png)
@@ -1120,15 +1114,15 @@ Click事件处理器也可以写成这样；
 ```c#
 private void Button_Click(object sender, RoutedEventArgs e)
 {
-	// 允许以声明方式访问数据绑定的 XML 数据。
-	XmlDataProvider xDataProvider = new XmlDataProvider();
-	xDataProvider.Source = new Uri(@"E:\CsharpCode\wpf-code\WPF的学习\DataBinding\RawData.xml");
+    // 允许以声明方式访问数据绑定的 XML 数据。
+    XmlDataProvider xDataProvider = new XmlDataProvider();
+    xDataProvider.Source = new Uri(@"E:\CsharpCode\wpf-code\WPF的学习\DataBinding\RawData.xml");
 
-	// 获取或设置用于生成数据集合的 XPath 查询。这样我们要把Student生成集合
-	xDataProvider.XPath = @"/StudentList/Student";
+    // 获取或设置用于生成数据集合的 XPath 查询。这样我们要把Student生成集合
+    xDataProvider.XPath = @"/StudentList/Student";
 
-	this.ListViewStudents.DataContext = xDataProvider;
-	this.ListViewStudents.SetBinding(ListView.ItemsSourceProperty, new Binding());
+    this.ListViewStudents.DataContext = xDataProvider;
+    this.ListViewStudents.SetBinding(ListView.ItemsSourceProperty, new Binding());
 }
 ```
 
@@ -1229,7 +1223,6 @@ ui代码
         <Button Content="Load" Click="Button_Click"/>
     </StackPanel>
 </Window>
-
 ```
 
 **数据在集合；**
@@ -1237,20 +1230,20 @@ ui代码
 从⼀个已经填充好的`List<Student>`对象中检索出所有名字以字⺟T开头的学⽣
 
 ```c#
-   private void Button_Click(object sender, RoutedEventArgs e)
-   {
-       List<Student1> student1s = new List<Student1>()
-       {
-           new Student1(){Id = 0,Name = "Join",Age = 33},
-           new Student1(){Id = 1,Name = "Tim",Age = 22},
-           new Student1{Id = 2,Name = "Zoom",Age = 3},
-           new Student1(){Id = 3,Name = "Tom",Age = 21},
-           new Student1(){Id = 4,Name = "Mike",Age = 11},
-           new Student1(){Id = 5,Name = "Vni",Age = 12}
-           
-       };
-       this.ListViewStudent.ItemsSource = from stu in student1s where stu.Name.StartsWith("T") select stu;
-   }
+private void Button_Click(object sender, RoutedEventArgs e)
+{
+    List<Student1> student1s = new List<Student1>()
+    {
+        new Student1(){Id = 0,Name = "Join",Age = 33},
+        new Student1(){Id = 1,Name = "Tim",Age = 22},
+        new Student1{Id = 2,Name = "Zoom",Age = 3},
+        new Student1(){Id = 3,Name = "Tom",Age = 21},
+        new Student1(){Id = 4,Name = "Mike",Age = 11},
+        new Student1(){Id = 5,Name = "Vni",Age = 12}
+
+    };
+    this.ListViewStudent.ItemsSource = from stu in student1s where stu.Name.StartsWith("T") select stu;
+}
 ```
 
 **DataTable对象⾥；**
@@ -1258,43 +1251,43 @@ ui代码
 如果数据存放在⼀个已经填充好的DataTable对象⾥，则代码是这样：
 
 ```c#
-  private void Button_Click(object sender, RoutedEventArgs e)
-  {
-    	DataTable dataTable = LoadData();
-      	this.ListViewStudent.ItemsSource =
-          from row in dataTable.Rows.Cast<DataRow>()
-          where Convert.ToString(row["Name"]).StartsWith("T")
-          select new Student1()
-          {
-              Id = int.Parse(row["Id"].ToString()),
-              Name = row["Name"].ToString(),
-              Age = int.Parse(row["Age"].ToString())
-          };
+private void Button_Click(object sender, RoutedEventArgs e)
+{
+    DataTable dataTable = LoadData();
+    this.ListViewStudent.ItemsSource =
+        from row in dataTable.Rows.Cast<DataRow>()
+        where Convert.ToString(row["Name"]).StartsWith("T")
+        select new Student1()
+    {
+        Id = int.Parse(row["Id"].ToString()),
+        Name = row["Name"].ToString(),
+        Age = int.Parse(row["Age"].ToString())
+    };
 
-  }
+}
 
- /// <summary>
- /// 模拟从数据库获取数据
- /// </summary>
- /// <returns></returns>
- DataTable LoadData()
- {
+/// <summary>
+/// 模拟从数据库获取数据
+/// </summary>
+/// <returns></returns>
+DataTable LoadData()
+{
 
-     DataTable dataTable = new DataTable();
+    DataTable dataTable = new DataTable();
 
-     // 定义表的列：
-     dataTable.Columns.Add("ID", typeof(int));
-     dataTable.Columns.Add("Name", typeof(string));
-     dataTable.Columns.Add("Age", typeof(int));
-     // 添加行到DataTable中：
-     dataTable.Rows.Add(0, "John", 25);
-     dataTable.Rows.Add(1, "Amy", 30);
-     dataTable.Rows.Add(3, "Tom", 28);
-     dataTable.Rows.Add(4, "Any", 18);
-     dataTable.Rows.Add(5, "Mak", 38);
+    // 定义表的列：
+    dataTable.Columns.Add("ID", typeof(int));
+    dataTable.Columns.Add("Name", typeof(string));
+    dataTable.Columns.Add("Age", typeof(int));
+    // 添加行到DataTable中：
+    dataTable.Rows.Add(0, "John", 25);
+    dataTable.Rows.Add(1, "Amy", 30);
+    dataTable.Rows.Add(3, "Tom", 28);
+    dataTable.Rows.Add(4, "Any", 18);
+    dataTable.Rows.Add(5, "Mak", 38);
 
-     return dataTable;
- }
+    return dataTable;
+}
 ```
 
 **数据存储在XML⽂件⾥;**
@@ -1302,16 +1295,16 @@ ui代码
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
 <StudentList>
-  <Calss>
-    <Student Id="0" Name="Join" Age="33" />
-    <Student Id ="1" Name = "Tim" Age = "22"/>
-    <Student Id ="2" Name = "Zoom" Age = "3"/>
-  </Calss>
-  <Calss>
-    <Student Id="3" Name = "Tom" Age = "21" />
-    <Student Id ="4" Name = "Mike" Age = "11" />
-    <Student Id ="5" Name = "Vni" Age = "12"/>
-  </Calss>
+    <Calss>
+        <Student Id="0" Name="Join" Age="33" />
+        <Student Id ="1" Name = "Tim" Age = "22"/>
+        <Student Id ="2" Name = "Zoom" Age = "3"/>
+    </Calss>
+    <Calss>
+        <Student Id="3" Name = "Tom" Age = "21" />
+        <Student Id ="4" Name = "Mike" Age = "11" />
+        <Student Id ="5" Name = "Vni" Age = "12"/>
+    </Calss>
 </StudentList>
 ```
 
@@ -1391,7 +1384,6 @@ namespace DataBinding
         // 其它方法...
     }
 }
-
 ````
 
 
@@ -1411,19 +1403,18 @@ namespace DataBinding
         <Button Click="Button_Click" Content="创建ObjectDataProvider"/>
     </StackPanel>
 </Window>
-
 ```
 
 ```c#
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            ObjectDataProvider objectDataProvider = new ObjectDataProvider();
-            objectDataProvider.ObjectInstance = new Calculator();
-            objectDataProvider.MethodName = "Add"; // 指定要调用的方法
-            objectDataProvider.MethodParameters.Add("100"); // 添加参数
-            objectDataProvider.MethodParameters.Add("200");
-            MessageBox.Show(objectDataProvider.Data.ToString());
-        }
+private void Button_Click(object sender, RoutedEventArgs e)
+{
+    ObjectDataProvider objectDataProvider = new ObjectDataProvider();
+    objectDataProvider.ObjectInstance = new Calculator();
+    objectDataProvider.MethodName = "Add"; // 指定要调用的方法
+    objectDataProvider.MethodParameters.Add("100"); // 添加参数
+    objectDataProvider.MethodParameters.Add("200");
+    MessageBox.Show(objectDataProvider.Data.ToString());
+}
 ```
 
 
@@ -1451,7 +1442,6 @@ namespace DataBinding
         <TextBox x:Name="TextBoxResult" Margin="5"/>
     </StackPanel>
 </Window>
-
 ```
 
 SetBinding的⽅法处理
@@ -1519,7 +1509,6 @@ namespace DataBinding
         }
     }
 }
-
 ```
 
 执行结果
@@ -1542,7 +1531,7 @@ obp.ConstructorParameters.Add(arg2);
 
 - `bindingToResult`但使⽤“`.`”作为Path——前⾯说过，当数据源本⾝就代表数据的时候就使⽤“`.`”作Path，并且“`.`”在XAML代码⾥可以省略不写。
 
-  > **注意**
+  > [!Note]
   > 在把ObjectDataProvider对象当作Binding的Source来使⽤时，这个对象本⾝就代表
   > 了数据，所以这⾥的Path使⽤的是“.”⽽⾮其Data属性。
 
@@ -1580,7 +1569,6 @@ RelativeSource属性的数据类型为RelativeSource类
         </DockPanel>
     </Grid>
 </Window>
-
 ```
 
 层级关系
@@ -1630,13 +1618,13 @@ namespace DataBinding
 对应xaml代码
 
 ```xaml
- <TextBox x:Name="TextBox1"
-          Text="{
-Binding RelativeSource={RelativeSource FindAncestor
-                ,AncestorLevel=1
-                ,AncestorType={x:Type Grid}}
-     ,Path=Name
-                }"
+<TextBox x:Name="TextBox1"
+         Text="{
+               Binding RelativeSource={RelativeSource FindAncestor
+               ,AncestorLevel=1
+               ,AncestorType={x:Type Grid}}
+               ,Path=Name
+               }"
 ```
 
 
@@ -1649,26 +1637,24 @@ Binding RelativeSource={RelativeSource FindAncestor
 
 - AncestorType 告诉Binding寻找哪个类型的对象作为⾃⼰的源，不是这个类型的对象会被跳过
 
-
-
 #### 关联到自身
 
 TextBox需要关联⾃⾝的Name属性，
 
 ```c#
- public partial class RelativeSourceWindow : Window
- {
-     public RelativeSourceWindow()
-     {
-         InitializeComponent();
-         
-         RelativeSource relativeSource = new RelativeSource();
-         relativeSource.Mode = RelativeSourceMode.Self;
+public partial class RelativeSourceWindow : Window
+{
+    public RelativeSourceWindow()
+    {
+        InitializeComponent();
 
-         Binding binding = new Binding("Name") { RelativeSource = relativeSource };
-         this.TextBox1.SetBinding(TextBox.TextProperty, binding);
-     }
- }
+        RelativeSource relativeSource = new RelativeSource();
+        relativeSource.Mode = RelativeSourceMode.Self;
+
+        Binding binding = new Binding("Name") { RelativeSource = relativeSource };
+        this.TextBox1.SetBinding(TextBox.TextProperty, binding);
+    }
+}
 ```
 
 
@@ -1727,57 +1713,56 @@ Binding的作⽤就是架在Source与Target之间的桥梁，数据可以在这�
         <Slider x:Name="Slider1" Minimum="0" Maximum="100"/>
     </StackPanel>
 </Window>
-
 ```
 
 准备⼀个ValidationRule的派⽣类，实现我们的校验规则
 
 ```c#
 public class RangeValidationRule : ValidationRule
-  {
-      // 实现Validate方法
-      public override ValidationResult Validate(object value, CultureInfo cultureInfo)
-      {
-          double d = 0;
-          if(double.TryParse(value.ToString(),out d))
-          {
-              if(d >= 0 && d <= 100)
-              {
-                  /**
+{
+    // 实现Validate方法
+    public override ValidationResult Validate(object value, CultureInfo cultureInfo)
+    {
+        double d = 0;
+        if(double.TryParse(value.ToString(),out d))
+        {
+            if(d >= 0 && d <= 100)
+            {
+                /**
                    * public ValidationResult(bool isValid, object errorContent);
                    * 参数；
                    *  - bool isValid 校验是否成功
                    *  - object errorContent 校验错误时消息
                    */
-                  return new ValidationResult(true,null);
-              }
-          }
+                return new ValidationResult(true,null);
+            }
+        }
 
-          return new ValidationResult(false, "Validation Failed");
-      }
+        return new ValidationResult(false, "Validation Failed");
+    }
 }
 ```
 
 建立Binding
 
 ```c#
- public partial class ValidationRuleWindow : Window
- {
-     public ValidationRuleWindow()
-     {
-         InitializeComponent();
+public partial class ValidationRuleWindow : Window
+{
+    public ValidationRuleWindow()
+    {
+        InitializeComponent();
 
-         Binding binding = new Binding("Value") {Source = this.Slider1 };
-         binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
-         // 设置数据校验规则
-         RangeValidationRule rangeValidationRule = new RangeValidationRule();
-         binding.ValidationRules.Add(rangeValidationRule);
+        Binding binding = new Binding("Value") {Source = this.Slider1 };
+        binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
+        // 设置数据校验规则
+        RangeValidationRule rangeValidationRule = new RangeValidationRule();
+        binding.ValidationRules.Add(rangeValidationRule);
 
 
-         this.TxtBox1.SetBinding(TextBox.TextProperty,binding);
+        this.TxtBox1.SetBinding(TextBox.TextProperty,binding);
 
-     }
- }
+    }
+}
 ```
 
 当输⼊0到100之间的值时程序正常显⽰，但输⼊这个区间之外的值或不能被解析的值时TextBox会显⽰红⾊边框，表
@@ -1796,31 +1781,31 @@ Binding只在Target**被外部⽅法更新**时校验数据，⽽**来⾃Binding
 先把slider1的取值范围由0到100改成-10到110
 
 ```xaml
- <Slider x:Name="Slider1" Minimum="-10" Maximum="110"/>
+<Slider x:Name="Slider1" Minimum="-10" Maximum="110"/>
 ```
 
 然后把设置Binding的代码改为：
 
 ```c#
- public partial class ValidationRuleWindow : Window
- {
-     public ValidationRuleWindow()
-     {
-         InitializeComponent();
+public partial class ValidationRuleWindow : Window
+{
+    public ValidationRuleWindow()
+    {
+        InitializeComponent();
 
-         Binding binding = new Binding("Value") {Source = this.Slider1 };
-         binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
-         // 设置数据校验规则
-         RangeValidationRule rangeValidationRule = new RangeValidationRule();
-         // 获取或设置一个值，该值指示当 Binding  的目标更新时是否运行验证规则
-         rangeValidationRule.ValidatesOnTargetUpdated = true;
-         binding.ValidationRules.Add(rangeValidationRule);
+        Binding binding = new Binding("Value") {Source = this.Slider1 };
+        binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
+        // 设置数据校验规则
+        RangeValidationRule rangeValidationRule = new RangeValidationRule();
+        // 获取或设置一个值，该值指示当 Binding  的目标更新时是否运行验证规则
+        rangeValidationRule.ValidatesOnTargetUpdated = true;
+        binding.ValidationRules.Add(rangeValidationRule);
 
 
-         this.TxtBox1.SetBinding(TextBox.TextProperty,binding);
+        this.TxtBox1.SetBinding(TextBox.TextProperty,binding);
 
-     }
- }
+    }
+}
 ```
 
 这样，当Slider的滑块移出有效范围时TextBox也会显⽰校验失败，这样我们就同时对源和目标之间的双向数据都做检验了。
@@ -1838,43 +1823,41 @@ Binding对象的`NotifyOnValidationError`属性设为true，
 这样当数据**校验失败**的时候Binding会像报警器⼀样**发出⼀个信号**，这个信号会以Binding对象的Target为起点在UI元素树上传播。信号每到达⼀个结点，如果这个结点上设置有对这种信号的侦听器（事件处理器），那么这个侦听器就会被触发⽤以处理这个信号。信号处理完后，程序员还可以选择是让信号继续向下传播还是就此终⽌——这就是路由事件，信号在UI元素树上的传递过程就称为路由（Route）。
 
 ```c#
- public partial class ValidationRuleWindow : Window
- {
-     public ValidationRuleWindow()
-     {
-         InitializeComponent();
+public partial class ValidationRuleWindow : Window
+{
+    public ValidationRuleWindow()
+    {
+        InitializeComponent();
 
-         Binding binding = new Binding("Value") {Source = this.Slider1 };
-         binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
-         // 设置数据校验规则
-         RangeValidationRule rangeValidationRule = new RangeValidationRule();
-         // 获取或设置一个值，该值指示当 Binding  的目标更新时是否运行验证规则
-         rangeValidationRule.ValidatesOnTargetUpdated = true;
-         binding.ValidationRules.Add(rangeValidationRule);
-         // 发送检验失败路由事件
-         binding.NotifyOnValidationError = true;
-         // 添加指定路由事件类型处理程序
-         this.TxtBox1.AddHandler(Validation.ErrorEvent, new RoutedEventHandler(ValidationError));
+        Binding binding = new Binding("Value") {Source = this.Slider1 };
+        binding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
+        // 设置数据校验规则
+        RangeValidationRule rangeValidationRule = new RangeValidationRule();
+        // 获取或设置一个值，该值指示当 Binding  的目标更新时是否运行验证规则
+        rangeValidationRule.ValidatesOnTargetUpdated = true;
+        binding.ValidationRules.Add(rangeValidationRule);
+        // 发送检验失败路由事件
+        binding.NotifyOnValidationError = true;
+        // 添加指定路由事件类型处理程序
+        this.TxtBox1.AddHandler(Validation.ErrorEvent, new RoutedEventHandler(ValidationError));
 
-         this.TxtBox1.SetBinding(TextBox.TextProperty,binding);
+        this.TxtBox1.SetBinding(TextBox.TextProperty,binding);
 
-     }
-     /// <summary>
-     /// 数据检验失败处理
-     /// </summary>
-     /// <param name="sendr"></param>
-     /// <param name="e"></param>
-     void ValidationError(object sendr,RoutedEventArgs e)
-     {
-         // 获取指定元素的 Errors 附加属性的值。返回一个ReadOnlyObservableCollection<ValidationError>泛型集合
-         if (Validation.GetErrors(this.TxtBox1).Count > 0)
-         {
-             this.TxtBox1.ToolTip = Validation.GetErrors(this.TxtBox1)[0].ErrorContent.ToString();
-         }
-     }
-
-
- }
+    }
+    /// <summary>
+    /// 数据检验失败处理
+    /// </summary>
+    /// <param name="sendr"></param>
+    /// <param name="e"></param>
+    void ValidationError(object sendr,RoutedEventArgs e)
+    {
+        // 获取指定元素的 Errors 附加属性的值。返回一个ReadOnlyObservableCollection<ValidationError>泛型集合
+        if (Validation.GetErrors(this.TxtBox1).Count > 0)
+        {
+            this.TxtBox1.ToolTip = Validation.GetErrors(this.TxtBox1)[0].ErrorContent.ToString();
+        }
+    }
+}
 ```
 
 程序运⾏时如果校验失败，TextBox的ToolTip就会提⽰⽤户
@@ -1898,8 +1881,8 @@ Binding还有另外⼀种机制称为数据转换（DataConvert），当Source�
 public interface IValueConverter
 {
     // Source流向Target时调用 (数据源到目标转换)
-	object Convert(object value, Type targetType, object parameter, CultureInfo culture);
-	// Target流向Source时调用 （目标到数据源转换）
+    object Convert(object value, Type targetType, object parameter, CultureInfo culture);
+    // Target流向Source时调用 （目标到数据源转换）
     object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture);
 }
 ```
@@ -1963,8 +1946,6 @@ namespace DataBinding
         public Category Category { get; set; }
         public State State { get; set; }
     }
-
-
 }
 ```
 
@@ -1983,32 +1964,32 @@ Plane的State属性在UI⾥被映射为CheckBox。
 - ⼀个是由Category类型单向转换为string类型（XAML编译器能够把string对象解析为图⽚资源）
 
   ```c#
-   internal class CategoryToSourceConverter : IValueConverter
-   {
+  internal class CategoryToSourceConverter : IValueConverter
+  {
   
-       // category 转换为Uri
-       public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-       {
-           Category c = (Category) value;
-           switch (c)
-           {
-               case Category.Bomber:
-                   // XAML编译器能够把string对象解析为图⽚资源
-                   return @"\icons\Bomber.png";
-               case Category.Fighter:
-                   return @"\icons\Fighter.png";
-               default:
-                   return null;
-           }
+      // category 转换为Uri
+      public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+      {
+          Category c = (Category) value;
+          switch (c)
+          {
+              case Category.Bomber:
+                  // XAML编译器能够把string对象解析为图⽚资源
+                  return @"\icons\Bomber.png";
+              case Category.Fighter:
+                  return @"\icons\Fighter.png";
+              default:
+                  return null;
+          }
   
-       }
-       //不会执行
-       // 因为是单向绑定只会调用数据源到目标转换
-       public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-       {
-           throw new NotImplementedException();
-       }
-   }
+      }
+      //不会执行
+      // 因为是单向绑定只会调用数据源到目标转换
+      public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+      {
+          throw new NotImplementedException();
+      }
+  }
   ```
 
   
@@ -2016,43 +1997,43 @@ Plane的State属性在UI⾥被映射为CheckBox。
 - 另⼀个是在State与bool?类型之间双向转换。
 
   ```c#
-   internal class StateToNullableBoolConverter : IValueConverter
-   {
-       // State转换为Bool
-       public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-       {
-           State s = (State)value;
-           switch (s)
-           {
-               case State.Available:
-                   return true;
-               case State.Locked:
-                   return false;
-               case State.Unknown:
-               default:
-                   return null;
+  internal class StateToNullableBoolConverter : IValueConverter
+  {
+      // State转换为Bool
+      public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+      {
+          State s = (State)value;
+          switch (s)
+          {
+              case State.Available:
+                  return true;
+              case State.Locked:
+                  return false;
+              case State.Unknown:
+              default:
+                  return null;
   
-           }
+          }
   
-       }
+      }
   
-       // Bool转换为State
-       public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-       {
-           bool? v = (bool?)value;
-           switch (v)
-           {
-               case true:
-                   return State.Available;
-               case false: 
-                   return State.Locked;
-               case null:
-               default:
-                   return State.Unknown;
-           }
+      // Bool转换为State
+      public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+      {
+          bool? v = (bool?)value;
+          switch (v)
+          {
+              case true:
+                  return State.Available;
+              case false: 
+                  return State.Locked;
+              case null:
+              default:
+                  return State.Unknown;
+          }
   
-       }
-   }
+      }
+  }
   ```
 
 在布局中使用
@@ -2088,19 +2069,19 @@ Plane的State属性在UI⾥被映射为CheckBox。
 图标显示和状态显示分别都设置上我们自定义的转换器
 
 ```xaml
- <ListBox x:Name="ListBoxPlane" Height="100">
-     <ListBox.ItemTemplate>
-         <DataTemplate>
-             <StackPanel Orientation="Horizontal">
-                 <Image Width="20" Height="20"
-                        Source="{Binding Path=Category, Converter={StaticResource ctsc}}"/>
-                 <TextBlock Text="{Binding Name}" Width="20" Margin="80,0"/>
-                 <CheckBox IsThreeState="True" 
-                           IsChecked="{Binding Path=State,Converter={StaticResource stnbc}}"/>
-             </StackPanel>
-         </DataTemplate>
-     </ListBox.ItemTemplate>
- </ListBox>
+<ListBox x:Name="ListBoxPlane" Height="100">
+    <ListBox.ItemTemplate>
+        <DataTemplate>
+            <StackPanel Orientation="Horizontal">
+                <Image Width="20" Height="20"
+                       Source="{Binding Path=Category, Converter={StaticResource ctsc}}"/>
+                <TextBlock Text="{Binding Name}" Width="20" Margin="80,0"/>
+                <CheckBox IsThreeState="True" 
+                          IsChecked="{Binding Path=State,Converter={StaticResource stnbc}}"/>
+            </StackPanel>
+        </DataTemplate>
+    </ListBox.ItemTemplate>
+</ListBox>
 ```
 
 
@@ -2108,29 +2089,29 @@ Plane的State属性在UI⾥被映射为CheckBox。
 Load按钮的Click事件处理器负责把⼀组⻜机的数据赋值给ListBox的ItemsSource属性，Save按钮的Click事件处理器负责把⽤户更改过的数据写⼊⽂件
 
 ```c#
-   private void BtnLoad_Click(object sender, RoutedEventArgs e)
-   {
-       List<Plane> planeList = new List<Plane>()
-       {
-           new Plane(){Category = Category.Bomber,Name = "B-J",State = State.Unknown},
-           new Plane() { Category = Category.Fighter, Name = "B-2", State = State.Unknown },
-           new Plane() { Category = Category.Bomber, Name = "F-22", State = State.Unknown },
-           new Plane() { Category = Category.Bomber, Name = "B-33", State = State.Unknown },
-           new Plane() { Category = Category.Fighter, Name = "F-18", State = State.Unknown },
-           new Plane() { Category = Category.Bomber, Name = "J-10", State = State.Unknown }
-       };
-       this.ListBoxPlane.ItemsSource = planeList;
+private void BtnLoad_Click(object sender, RoutedEventArgs e)
+{
+    List<Plane> planeList = new List<Plane>()
+    {
+        new Plane(){Category = Category.Bomber,Name = "B-J",State = State.Unknown},
+        new Plane() { Category = Category.Fighter, Name = "B-2", State = State.Unknown },
+        new Plane() { Category = Category.Bomber, Name = "F-22", State = State.Unknown },
+        new Plane() { Category = Category.Bomber, Name = "B-33", State = State.Unknown },
+        new Plane() { Category = Category.Fighter, Name = "F-18", State = State.Unknown },
+        new Plane() { Category = Category.Bomber, Name = "J-10", State = State.Unknown }
+    };
+    this.ListBoxPlane.ItemsSource = planeList;
 
-   }
+}
 
-   private void BtnSave_Click(object sender, RoutedEventArgs e)
-   {
-       StringBuilder stringBuilder = new StringBuilder();
-       foreach( Plane p in ListBoxPlane.ItemsSource){
-           stringBuilder.AppendLine($"Category={p.Category},Name={p.Name},State={p.State}");
-       }
-       File.WriteAllText(@"E:\CsharpCode\wpf-code\WPF的学习\DataBinding\PlaneList.txt",stringBuilder.ToString());
-   }
+private void BtnSave_Click(object sender, RoutedEventArgs e)
+{
+    StringBuilder stringBuilder = new StringBuilder();
+    foreach( Plane p in ListBoxPlane.ItemsSource){
+        stringBuilder.AppendLine($"Category={p.Category},Name={p.Name},State={p.State}");
+    }
+    File.WriteAllText(@"E:\CsharpCode\wpf-code\WPF的学习\DataBinding\PlaneList.txt",stringBuilder.ToString());
+}
 ```
 
 执行结果
@@ -2172,41 +2153,40 @@ MultiBinding具有⼀个名为**Bindings**的属性，其类型是`Collection<Bi
         <Button  x:Name="BtnSubmit" Content="Login" />
     </StackPanel>
 </Window>
-
 ```
 
 准备一个数据转器它实现`IMultiValueConverter`接⼝。负责将校验通过的TextBox（string类型转换为bool）给button使用
 
 ```c#
- internal class LoginMulitConverter : IMultiValueConverter
- {
-     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
-     {
-         /*
+internal class LoginMulitConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        /*
            Cast<TResult> 方法将 IEnumerable 的元素强制转换为指定的类型。   
            返回；
                一个 IEnumerable<T>，包含强制转换为指定类型的源序列的每个元素。
 
              Any()方法支持LINQ表达式
           */
-         if (!values.Cast<string>().Any(text => string.IsNullOrEmpty(text))
+        if (!values.Cast<string>().Any(text => string.IsNullOrEmpty(text))
             && values[0].ToString() == values[1].ToString()
             && values[2].ToString() == values[3].ToString()
-            )
-         {
-             return true;
-         }
-         return false;
+           )
+        {
+            return true;
+        }
+        return false;
 
 
-         throw new NotImplementedException();
-     }
-     // 单向绑定所以此方法不被调用
-     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-     {
-         throw new NotImplementedException();
-     }
- }
+        throw new NotImplementedException();
+    }
+    // 单向绑定所以此方法不被调用
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
 ```
 
 
@@ -2214,33 +2194,33 @@ MultiBinding具有⼀个名为**Bindings**的属性，其类型是`Collection<Bi
 SetMultiBinding()负责逻辑处理,
 
 ```c#
-  public partial class MultiBindingWindow : Window
-  {
-      public MultiBindingWindow()
-      {
-          InitializeComponent();
+public partial class MultiBindingWindow : Window
+{
+    public MultiBindingWindow()
+    {
+        InitializeComponent();
 
-          SetMultiBinding();
-      }
+        SetMultiBinding();
+    }
 
-      private void SetMultiBinding()
-      {
-          var txtBoxName = new Binding("Text") {Source = this.TxtBoxName};
-          var txtBoxConfName = new Binding("Text") {Source = this.TxtBoxConfName};
-          var txtBoxEmail = new Binding("Text") { Source = this.TxtBoxEmail };
-          var txtBoxConfEmail = new Binding("Text") { Source = this.TxtBoxConfEmail };
+    private void SetMultiBinding()
+    {
+        var txtBoxName = new Binding("Text") {Source = this.TxtBoxName};
+        var txtBoxConfName = new Binding("Text") {Source = this.TxtBoxConfName};
+        var txtBoxEmail = new Binding("Text") { Source = this.TxtBoxEmail };
+        var txtBoxConfEmail = new Binding("Text") { Source = this.TxtBoxConfEmail };
 
-          MultiBinding multiBinding = new MultiBinding();
-          multiBinding.Mode = BindingMode.OneWay;
-          multiBinding.Bindings.Add(txtBoxName);
-          multiBinding.Bindings.Add(txtBoxConfName);
-          multiBinding.Bindings.Add(txtBoxEmail);
-          multiBinding.Bindings.Add(txtBoxConfEmail);
-          multiBinding.Converter = new LoginMulitConverter();
+        MultiBinding multiBinding = new MultiBinding();
+        multiBinding.Mode = BindingMode.OneWay;
+        multiBinding.Bindings.Add(txtBoxName);
+        multiBinding.Bindings.Add(txtBoxConfName);
+        multiBinding.Bindings.Add(txtBoxEmail);
+        multiBinding.Bindings.Add(txtBoxConfEmail);
+        multiBinding.Converter = new LoginMulitConverter();
 
-          this.BtnSubmit.SetBinding(Button.IsEnabledProperty,multiBinding);
-      }
-  }
+        this.BtnSubmit.SetBinding(Button.IsEnabledProperty,multiBinding);
+    }
+}
 ```
 
 - MultiBinding对于添加⼦级Binding的顺序是敏感的，因为这个顺序决定了汇集到Converter⾥数据的顺序。
